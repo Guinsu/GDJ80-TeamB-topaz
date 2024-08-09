@@ -35,4 +35,4 @@ build/
 application-db.properties
 mail.properties 
 upload
-/assets/img/
+**/assets/img/
