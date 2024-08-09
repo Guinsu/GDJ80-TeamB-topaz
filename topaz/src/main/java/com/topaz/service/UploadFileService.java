@@ -31,7 +31,7 @@ public class UploadFileService {
 		
 		// 파일 저장 경로
 		// 현재 작업중인 디렉토리를 기준으로 파일 경로를 정해준다.
-		String imagePath = System.getProperty("user.dir") + "/src/main/resources/static/upload/"; 
+		String imagePath =  "/home/ubuntu/tomcat/apache-tomcat-10.1.24/webapps/topaz/upload/";
 		
 		
 		//file 체 생성 후 view 에서 받아온 값을 바인딩
@@ -98,7 +98,7 @@ public class UploadFileService {
 		
 		// 파일 저장 경로
 		// 현재 작업중인 디렉토리를 기준으로 파일 경로를 정해준다.
-		String imagePath = System.getProperty("user.dir") + "/src/main/resources/static/upload/"; 
+		String imagePath =  "/home/ubuntu/tomcat/apache-tomcat-10.1.24/webapps/topaz/upload/";
 		
 		
 		//file 체 생성 후 view 에서 받아온 값을 바인딩

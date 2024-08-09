@@ -46,7 +46,7 @@ public class EmployeeService {
 	    log.debug(Debug.KIS + "service / insertEmp / employeeRequest : " + employeeRequest);
 
 	    // 파일 저장 경로
-	    String imagePath = System.getProperty("user.dir") + "/src/main/resources/static/upload/";
+	    String imagePath = "/home/ubuntu/tomcat/apache-tomcat-10.1.24/webapps/topaz/upload/";
 
 	    // 업로드 파일 처리
 	    if (!employeeRequest.getUploadFile().isEmpty()) {
