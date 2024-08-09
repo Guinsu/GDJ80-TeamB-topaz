@@ -1,0 +1,270 @@
+@charset "UTF-8";
+
+/* ==========사내일정 - scheduleList.jsp========== */
+.todayDiv{
+	margin: 3%;
+}
+
+.todayDiv button{
+	border: 0;
+	outline: 0;
+	background: none;
+}
+
+/* 캘린더 일정 간격 조정 */
+.fc-event {
+    margin-bottom: 3px; 
+}
+ 
+ /* 일요일 날짜 색상 */
+.fc-day-sun a {
+  color: red;
+  text-decoration: none;
+}
+
+/* 토요일 날짜 색상 */
+.fc-day-sat a {
+  color: blue;
+  text-decoration: none;
+}
+
+/* 평일 날짜 색상 */
+.fc-day-mon a, .fc-day-tue a, .fc-day-wed a,.fc-day-thu a, .fc-day-fri a {
+  color: #012970;
+  text-decoration: none;
+}
+
+/* 오늘의 일정 type별 색상 */
+.typeMeeting{
+	background-color: #81bbb2;
+}
+
+.typeInspection{
+	background-color: #ffbb57;
+}
+
+.typeFestival{
+	background-color: #af92e2;
+}
+
+.scheduleModalDiv{
+	margin-bottom: 15px;
+}
+
+/* 모달 내용등록 label */
+.modal-body label{
+	text-align: center;
+	font-weight: bolder;
+}
+
+
+
+/* ==========외주업체 예약일정 - bpoMainIn.jsp========== */
+.card-title span{
+	font-family: "Nunito", sans-serif;
+	color: #f7f7f7;
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 5px;
+    padding: 5px;
+    border-radius: 10px;
+}
+
+.card-title select{
+	margin-top: 15px;
+}
+
+.rsvnInfoWait{
+	background-color: #81bbb2;
+}
+
+.rsvnInfoConfirm{
+	background-color: #f6bf26;
+}
+
+.rsvnInfoCxl{
+	background-color: #d50000;
+}
+
+.bpoStateOn{
+	font-size: 14px;
+	padding: 8px;
+	margin: 3px;
+	background-color: #3788d8;
+	color: #f7f7f7;
+}
+
+.bpoStateOff{
+	font-size: 14px;
+	padding: 8px;
+	margin: 3px;
+	background-color: gray;
+	color: #f7f7f7;
+}
+
+
+/* ==========외주업체 목록 - bpoList.jsp========== */
+.bpoListPage{
+	--bs-pagination-color: #4154f1;
+}
+
+.searchSpan{
+	font-weight: bolder;
+}
+
+#searchType{
+	width: 10%; 
+	display: inline;
+}
+
+#searchWord{
+	width: 15%; 
+	display: inline;
+}
+
+.validMsg{
+	width: 100%;
+    margin-top: .25rem;
+    font-size: .875em;
+    color: var(--bs-form-invalid-color);
+}
+
+.bpoListSearchDiv{
+	text-align: right;
+}
+
+
+/* ==========외주업체 상세 - bpoDetail.jsp========== */
+.bpoPic{
+	margin-bottom: 20px;
+}
+
+.bpoLabel label{
+	font-weight: bolder;
+}
+
+.profile-overview > div >.label{
+	font-weight: bolder;
+}
+
+.bpoDetailsAll{
+    font-size: 18px;
+}
+
+.bpoDetailsAll > .row{
+	margin: 20px;
+}
+
+.preview{
+	max-width: 200px; 
+	max-height: 200px; 
+	margin-top: 10px; 
+	margin-bottom: 10px;
+	display: none;
+}
+ 
+ 
+/* ==========외주업체로그인 메인 - bpoMainOut.jsp========== */
+.detailNoticeDiv{
+	margin: auto;
+}
+
+
+/* ==========신규결재 - approvalAdd.jsp========== */
+
+.approvalEmpInfo input{
+	border-top: none; 
+	border-left: none;
+	border-right: none;
+	text-align: center;
+}
+
+.approvalEmpInfo label{
+	font-weight: bolder;
+	color: #012970;
+}
+
+.dayOffDiv label{
+	font-weight: bolder;
+	color: #012970;
+	text-align: center;
+}
+
+
+/* ==========결재 상세 - approvalDetail.jsp========== */
+.approvalSignShowLeft{
+	float: left;
+}
+
+.approvalSignShowLeft th{
+	width: 80px;
+	height: 30px;
+	text-align: center;
+	border: var(--bs-border-width) solid var(--bs-border-color);
+	padding: .375rem .75rem;
+    font-size: 1rem;
+    font-weight: 600;
+	line-height: 1.5;
+	background-color: #e2e3e5;
+	color: #012970;
+}
+
+.approvalSignShowLeft td{
+	width: 170px;
+	height: 30px;
+	border: var(--bs-border-width) solid var(--bs-border-color);
+	padding: .375rem .75rem;
+    font-size: 1rem;
+    font-weight: 400;
+	line-height: 1.5;
+}
+
+.approvalSignShow {
+	float: right;
+	text-align: center;
+}
+
+.approvalSignShow th{
+	width: 35px;
+	border: var(--bs-border-width) solid var(--bs-border-color);
+	padding: .375rem .75rem;
+    font-size: 1rem;
+    font-weight: 600;
+	line-height: 1.5;
+	background-color: #e2e3e5;
+	color: #012970;
+}
+
+
+.approvalSignShow td{
+	width: 140px;
+	border: var(--bs-border-width) solid var(--bs-border-color);
+	padding: .375rem .75rem;
+    font-size: 1rem;
+    font-weight: 400;
+	line-height: 1.5;
+}
+
+
+.approvalDetailDiv th{
+	text-align: center;
+	border: var(--bs-border-width) solid var(--bs-border-color);
+	padding: .375rem .75rem;
+    font-size: 1rem;
+    font-weight: 600;
+	line-height: 1.5;
+	background-color: #e2e3e5;
+	color: #012970;
+}
+
+
+.approvalDetailDiv td{
+ 	border: var(--bs-border-width) solid var(--bs-border-color);
+	padding: .375rem .75rem;
+    font-size: 1rem;
+    font-weight: 400;
+	line-height: 1.5;
+ }
+
+
+

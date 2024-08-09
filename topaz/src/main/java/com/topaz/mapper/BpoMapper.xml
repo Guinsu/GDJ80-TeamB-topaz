@@ -1,0 +1,494 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.topaz.mapper.BpoMapper">
+
+	<!-- 분류 번호: #5 - 외주업체 예약일정 관리 페이지 :: 예약일정 전체조회 -->
+	<select id="selectBpoRsvnList" parameterType="String" resultType="map">
+	    SELECT 
+	        os.rsvn_no rsvnNo,
+	        o.outsourcing_name outsourcingName,
+	        o.outsourcing_no outsourcingNo,
+	        os.rsvn_title rsvnTitle,
+	        (SELECT cd_nm FROM common_code WHERE crp_cd = 'W006' AND cd = os.rsvn_state) rsvnState,
+	        os.rsvn_content rsvnContent,
+	        DATE_FORMAT(os.rsvn_start, '%Y-%m-%dT%H:%i:%s') rsvnStart,
+	        DATE_FORMAT(os.rsvn_end, '%Y-%m-%dT%H:%i:%s') rsvnEnd
+	    FROM 
+	        outsourcing_rsvn os
+	        INNER JOIN outsourcing o ON os.outsourcing_no = o.outsourcing_no
+	    WHERE os.use_yn = (SELECT cd FROM common_code WHERE crp_cd = 'A002' AND cd = 'Y')
+	    AND (SELECT cd_nm FROM common_code WHERE crp_cd = 'W006' AND cd = os.rsvn_state) LIKE CONCAT('%', '', '%')
+	    <if test="inputState != null and inputState != ''">
+	     	AND os.outsourcing_no = #{inputState}
+		</if>
+	</select>
+
+	
+	<!-- 분류 번호: #5 - 외주업체 예약일정 관리 페이지 :: 외주업체 카테고리 가져오기 -->
+	<select id="selectBpoCategory" resultType="map">
+		SELECT outsourcing_no outsourcingNo, outsourcing_name outsourcingName
+		FROM outsourcing
+		WHERE use_yn = (SELECT cd FROM common_code WHERE crp_cd = 'A002' AND cd = 'Y')
+		AND outsourcing_type = (SELECT cd FROM common_code WHERE crp_cd = 'W002' AND cd = '2')
+	</select>
+	
+	
+	<!-- 분류 번호: #5 - 외주업체 예약일정 관리 페이지 :: 예약받는 외주업체 영업상태 -->
+	<select id="selectBpoState" resultType="map">
+		SELECT 
+			o.outsourcing_no outsourcingNo
+			,o.outsourcing_name outsourcingName
+			,o.incharge_name inchargeName
+			,CONCAT(SUBSTRING(o.contact_no from 1 for 3), '-'
+					, SUBSTRING(o.contact_no from 4 for 4), '-'
+					, SUBSTRING(o.contact_no from 8 for 4)) contactNo
+			,(SELECT cd_nm FROM common_code WHERE crp_cd = 'W001' AND cd = o.outsourcing_state) outsourcingState
+		FROM outsourcing o
+		WHERE o.outsourcing_type 
+				= (SELECT cd FROM common_code WHERE crp_cd = 'W002' AND cd = '2')
+		AND o.use_yn
+				= (SELECT cd FROM common_code WHERE crp_cd = 'A002' AND cd = 'Y')
+		ORDER BY outsourcingState DESC
+	</select>
+	
+	
+	<!-- 분류 번호: #5 #13 - 외주업체 예약일정 관리 페이지 :: 오늘의 예약 조회 -->
+	<select id="selectBpoRsvnToday" parameterType="String" resultType="map">
+		SELECT 
+	        os.rsvn_no rsvnNo
+	        , o.outsourcing_name outsourcingName
+	        , o.outsourcing_no outsourcingNo
+	        , SUBSTRING(os.rsvn_title, 1, 6) rsvnTitle
+	        , (SELECT cd_nm FROM common_code WHERE crp_cd = 'W006' AND cd = os.rsvn_state) rsvnState
+	        , os.rsvn_content rsvnContent
+	        , DATE_FORMAT(os.rsvn_start, '%H:%i') rsvnStart
+	        , DATE_FORMAT(os.rsvn_end, '%H:%i') rsvnEnd
+	    FROM 
+	        outsourcing_rsvn os
+	        INNER JOIN outsourcing o ON os.outsourcing_no = o.outsourcing_no
+	    WHERE os.use_yn 
+	    		= (SELECT cd FROM common_code WHERE crp_cd = 'A002' AND cd = 'Y')
+		AND (CURDATE() BETWEEN DATE(os.rsvn_start) AND DATE(os.rsvn_end) 
+				OR (CURDATE() = DATE(os.rsvn_start) AND CURDATE() = DATE(os.rsvn_end)))
+		<if test="outsourcingNo != null and outsourcingNo != ''">
+			AND os.outsourcing_no = #{outsourcingNo}
+		</if>
+	</select>
+	
+	
+	<!-- 분류 번호: #5 - 외주업체 업체 목록 페이지 :: 외주업체 전체 조회 -->
+	<select id="selectBpoList" parameterType="String" resultType="map">
+		SELECT
+			  ROW_NUMBER() OVER (ORDER BY o.reg_time DESC) AS No
+			, o.outsourcing_no outsourcingNo
+			, o.outsourcing_name outsourcingName
+			, (SELECT cd_nm FROM common_code WHERE crp_cd = 'W002' AND cd = o.outsourcing_type) outsourcingType
+			, o.incharge_name inchargeName
+			, CONCAT(SUBSTRING(o.contact_no from 1 for 3)
+						, '-', SUBSTRING(o.contact_no from 4 for 4)
+						, '-', SUBSTRING(o.contact_no from 8 for 4)) contactNo
+			, DATE(o.contract_start) contractStart
+			, DATE(o.contract_end) contractEnd
+			, o.emp_no empNo
+			, e.emp_name empName
+			, o.use_yn useYn
+		FROM outsourcing o 
+		INNER JOIN employee e 
+			ON o.emp_no = e.emp_no
+		<where>
+			<if test="searchWord != null">
+				AND o.outsourcing_name LIKE CONCAT('%',#{searchWord},'%')
+			</if>
+			<if test="searchType != null and searchType != ''">
+				AND o.outsourcing_type LIKE CONCAT('%',#{searchType},'%')
+			</if> 
+		</where>
+		LIMIT #{beginRow}, #{rowPerPage}
+	</select>
+	
+	
+	<!-- 분류 번호: #5 - 외주업체 업체 목록 페이지 :: 외주업체 전체 조회 총 행의 개수  -->
+	<select id="selectBpoListTotalRow" parameterType="String" resultType="int">
+		SELECT COUNT(*) cnt 
+		FROM outsourcing
+		<where>
+			<if test="searchWord != null">
+				AND outsourcing_name LIKE CONCAT('%',#{searchWord},'%')
+			</if>
+			<if test="searchType != null and searchType != ''">
+				AND outsourcing_type = #{searchType}
+			</if>
+		</where>
+	</select>
+	
+	
+	<!-- 분류 번호: #5 - 외주업체 예약일정 관리 페이지 :: 고객 이름으로 현재 입주중인 고객 조회 -->
+	<select id="selectGstChkList" parameterType="String" resultType="map">
+		SELECT gst_id gstId, gst_name gstName, room_no roomNo
+		FROM guest g
+		WHERE g.gst_type = (SELECT cd FROM common_code WHERE crp_cd = 'A003' AND cd = 'R')
+		AND g.gst_name LIKE CONCAT('%',#{gstName},'%')
+		AND g.use_yn 
+	    		= (SELECT cd FROM common_code WHERE crp_cd = 'A002' AND cd = 'Y')
+	</select>
+	
+	
+	<!-- 분류 번호: #5 - 외주업체 예약일정 관리 페이지 :: 신규 예약 등록 -->
+	<insert id="insertBpoRsvn" parameterType="com.topaz.dto.OutsourcingRsvn">
+		INSERT INTO outsourcing_rsvn(
+			rsvn_no
+			,outsourcing_no
+			,gst_id
+			,rsvn_title
+			,rsvn_state
+			,rsvn_content
+			,rsvn_start
+			,rsvn_end
+			,reg_id
+			,reg_time
+			,mod_id
+			,mod_time
+			,use_yn
+		)VALUES(
+			CURRENT_TIMESTAMP(5)
+			,#{outsourcingNo}
+			,#{gstId}
+			,#{rsvnTitle}
+			,'1'
+			,#{rsvnContent}
+			,#{rsvnStart}
+			,#{rsvnEnd}
+			,#{regId}
+			,NOW()
+			,#{modId}
+			,NOW()
+			,'Y'
+		)
+	</insert>
+	
+	
+	<!-- 분류 번호: #5 - 외주업체 예약일정 상세 페이지 :: 예약일정 상세보기 -->
+	<select id="selectBpoRsvnOne" parameterType="String" resultType="map">
+		SELECT 
+			os.rsvn_no rsvnNo
+			,os.outsourcing_no outsourcingNo
+			,o.outsourcing_name outsourcingName
+			,g.gst_name gstName
+			,g.room_no roomNo
+			,(SELECT cd_nm from common_code WHERE crp_cd = 'A001' AND cd = g.gst_gender) gstGender
+			,os.rsvn_title rsvnTitle
+			,(SELECT cd_nm from common_code WHERE crp_cd = 'W006' AND cd = os.rsvn_state) rsvnState
+			,os.rsvn_content rsvnContent
+			,os.rsvn_start rsvnStart
+			,os.rsvn_end rsvnEnd
+			
+			,COALESCE((SELECT emp_name FROM employee WHERE emp_no = os.reg_id) 
+				,(SELECT outsourcing_no FROM outsourcing WHERE outsourcing_no = os.reg_id)) regName
+			
+			,COALESCE((SELECT emp_name FROM employee WHERE emp_no = os.mod_id) 
+				,(SELECT outsourcing_no FROM outsourcing WHERE outsourcing_no = os.mod_id)) modName
+		FROM outsourcing_rsvn os
+		INNER JOIN outsourcing o 
+			ON os.outsourcing_no = o.outsourcing_no
+		INNER JOIN guest g 
+			ON os.gst_id = g.gst_id
+		WHERE os.rsvn_no = #{rsvnNo}
+	</select>
+	
+	
+	<!-- 분류 번호: #5 - 외주업체 예약일정 상세 페이지 :: 예약일정 수정 -->
+	<update id="updateBpoRsvn">
+		UPDATE 
+			outsourcing_rsvn 
+		SET 
+			rsvn_title = #{rsvnTitle}
+			<if test="rsvnState != null and rsvnState != ''">
+				, rsvn_state = #{rsvnState}
+			</if>
+			<if test="rsvnContent != null and rsvnContent != ''">
+				, rsvn_content = #{rsvnContent}
+			</if>
+			<if test="rsvnStart != null and rsvnStart != ''">
+				, rsvn_start = #{rsvnStart}
+			</if>
+			<if test="rsvnEnd != null and rsvnEnd != ''">
+				, rsvn_end = #{rsvnEnd}
+			</if>
+			
+			, mod_id = #{modId}
+			, mod_time = NOW()
+		WHERE 
+			rsvn_no = #{rsvnNo}
+	</update>
+	
+	
+	<!-- 분류 번호: #5 - 외주업체 등록 페이지 :: 직원 이름 조회 -->
+	<select id="selectEmpChkList" parameterType="String" resultType="map">
+		SELECT 
+			emp_no empNo
+			, emp_name empName
+			,(SELECT cd_nm FROM common_code WHERE crp_cd = 'E001' AND cd = emp_dept) empDept
+		FROM 
+			employee 
+		WHERE 
+			emp_name LIKE CONCAT('%',#{empName},'%');
+	</select>
+	
+	
+	<!-- 분류 번호: #5 - 외주업체 등록 페이지 :: 아이디 사용 가능여부 조회 -->
+	<select id="selectBpoIdChk" parameterType="String" resultType="boolean">
+		SELECT 
+			COUNT(*)
+		FROM 
+			outsourcing 
+		WHERE 
+			outsourcing_no = #{OutsourcingIdAll}
+	</select>
+	
+	
+	<!-- 분류 번호: #5 - 외주업체 등록 페이지 :: 외주업체 등록 -->
+	<insert id="insertBpo" parameterType="com.topaz.dto.Outsourcing">
+		INSERT INTO outsourcing(
+			outsourcing_no
+			,outsourcing_pw
+			,outsourcing_name
+			,outsourcing_about
+			,outsourcing_state
+			,outsourcing_type
+			,incharge_name
+			,contract_start
+			,contract_end
+			,emp_no
+			,contact_no
+			,post_no
+			,address
+			,reg_id
+			,reg_time
+			,mod_id
+			,mod_time
+			,use_yn
+		)VALUES(
+			#{outsourcingNo}
+			,SHA2(#{outsourcingPw}, 256)
+			,#{outsourcingName}
+			,#{outsourcingAbout}
+			,#{outsourcingState}
+			,#{outsourcingType}
+			,#{inchargeName}
+			,#{contractStart}
+			,#{contractEnd}
+			,#{empNo}
+			,#{contactNo}
+			,#{postNo}
+			,#{address}
+			,#{regId}
+			,NOW()
+			,#{modId}
+			,NOW()
+			,'Y'
+		)
+	</insert>
+	
+	
+	<!-- 분류 번호: #5 - 외주업체 등록 페이지 :: 외주업체 파일등록 -->
+	<insert id="insertBpoFile" parameterType="com.topaz.dto.UploadFile">
+		INSERT INTO file_upload(
+			file_no, reference_no, original_file_name
+			, file_name, file_size, file_type
+			, reg_time, mod_time, reg_id, mod_id, use_yn
+		)VALUES(
+			CURRENT_TIMESTAMP(5), #{referenceNo}, #{OriginalFileName}
+			, #{fileName}, #{fileSize}, #{fileType}
+			, NOW(), NOW(), #{regId}, #{modId}, #{useYN}
+		)
+	</insert>
+	
+	
+	<!-- 분류 번호: #5 - 외주업체 상세 페이지 :: 상세보기 -->
+	<select id="selectBpoOne" parameterType="String" resultType="map">
+		SELECT 
+			o.outsourcing_no outsourcingNo
+			, o.outsourcing_name outsourcingName
+			, o.outsourcing_about outsourcingAbout
+			, (SELECT cd_nm from common_code WHERE crp_cd = 'W001' AND cd = o.outsourcing_state) outsourcingState
+			, (SELECT cd_nm from common_code WHERE crp_cd = 'W002' AND cd = o.outsourcing_type) outsourcingType
+			, o.incharge_name inchargeName
+			, DATE(o.contract_start) contractStart
+			, DATE(o.contract_end) contractEnd
+			, o.emp_no empNo
+			, (SELECT emp_name FROM employee WHERE emp_no = o.emp_no) empName
+			, o.contact_no contactNo
+			, o.post_no postNo
+			, o.address address
+			, (SELECT emp_name FROM employee WHERE emp_no = o.reg_id) regId
+			, (SELECT emp_name FROM employee WHERE emp_no = o.mod_id) modId
+			, f.file_no fileNo
+			, f.file_name fileName
+			, o.use_yn useYn
+		FROM 
+			outsourcing o
+		LEFT JOIN file_upload f 
+			ON o.outsourcing_no = f.reference_no
+		WHERE 
+			o.outsourcing_no = #{outsourcingNo}
+	</select>
+	
+	
+	<!-- 분류 번호: #5 - 외주업체 상세 페이지 :: 수정하기 -->
+	<update id="updateBpo" parameterType="com.topaz.dto.Outsourcing">
+		UPDATE 
+			outsourcing
+		SET 
+			outsourcing_name = #{outsourcingName}
+			, outsourcing_about = #{outsourcingAbout}
+			, incharge_name = #{inchargeName}
+			, emp_no = #{empNo}
+			, contract_start = #{contractStart}
+			, contract_end = #{contractEnd}
+			, post_no = #{postNo}
+			, address = #{address}
+			, contact_no = #{contactNo}
+			, mod_id = #{modId}
+			, mod_time = NOW()
+		WHERE 
+			outsourcing_no = #{outsourcingNo}
+	</update>
+	
+	
+	<!-- 분류 번호: #5 - 외주업체 상세 페이지 :: 수정하기 파일수정 -->
+	<update id="updateBpoFile" parameterType="com.topaz.dto.UploadFile">
+		UPDATE 
+			file_upload
+		SET 
+			original_file_name = #{OriginalFileName}
+			, file_name = #{fileName}
+			, file_size = #{fileSize}
+			, file_type = #{fileType}
+			, mod_id = #{modId}
+			, mod_time = NOW()
+		
+		WHERE 
+			reference_no = #{referenceNo}
+	</update>
+	
+	
+	<!-- 분류 번호: #5 - 외주업체 상세 페이지 :: 비밀번호 초기화 수정 -->
+	<update id="updateBpoPw" parameterType="com.topaz.dto.Outsourcing">
+		UPDATE
+			outsourcing
+		SET
+			outsourcing_pw = SHA2(#{outsourcingPw}, 256)
+			, mod_id = #{modId}
+			, mod_time = NOW()
+		WHERE 
+			outsourcing_no = #{outsourcingNo}
+	</update>
+	
+	
+	<!-- 분류 번호: #13 - 외주업체 로그인 :: 메인 페이지 -->
+	<select id="selectBpoOutList" parameterType="String" resultType="map">
+		SELECT  
+			os.rsvn_no rsvnNo
+			, os.rsvn_title rsvnTitle
+			, os.rsvn_content rsvnContent
+			, (SELECT cd_nm FROM common_code WHERE crp_cd = 'W006' AND cd = os.rsvn_state) rsvnState
+			, DATE_FORMAT(os.rsvn_start, '%Y-%m-%dT%H:%i:%s') rsvnStart
+			, DATE_FORMAT(os.rsvn_end, '%Y-%m-%dT%H:%i:%s') rsvnEnd
+		FROM 
+			outsourcing_rsvn os
+		INNER JOIN 
+			outsourcing o 
+				ON os.outsourcing_no = o.outsourcing_no
+		WHERE 
+			os.use_yn = (SELECT cd FROM common_code WHERE crp_cd = 'A002' AND cd = 'Y')
+		AND 
+			o.outsourcing_no = #{outsourcingNo}
+	</select>
+	
+	
+	<!-- 분류 번호: #13 - 외주업체 로그인 :: 메인 페이지-영업상태변경 -->
+	<update id="updateBpoOutOnOff" parameterType="String">
+		UPDATE outsourcing 
+		SET outsourcing_state = #{stateChange} 
+		WHERE outsourcing_no = #{outsourcingNo}
+	</update>
+	
+	
+	<!-- 분류 번호: #13 - 외주업체 로그인 :: 메인 페이지-공지사항 리스트 -->
+	<select id="selectBpoNoticeList" parameterType="int" resultType="map">
+		SELECT 
+			n.news_no newsNo
+			, SUBSTRING(n.title, 1, 6) title
+			, SUBSTRING(n.content, 1, 6) content
+			, (SELECT cd_nm FROM common_code c WHERE c.crp_cd = 'W005' AND cd = n.category) category
+		FROM 
+			news_notice n
+		WHERE 
+			grade = '2'
+		AND 
+			use_yn = 'Y'
+		<if test="searchWord != null">
+			AND n.title LIKE CONCAT('%',#{searchWord},'%')
+		</if>
+		ORDER BY n.reg_time DESC
+		LIMIT #{beginRow}, #{rowPerPage}
+	</select>
+	
+	
+	<!-- 분류 번호: #13 - 외주업체 로그인 :: 메인 페이지-공지사항 리스트 총 행의 개수 -->
+	<select id="selectBpoNoticeListTotalCnt" parameterType="String" resultType="int">
+		SELECT 
+			COUNT(*) cnt
+		FROM 
+			news_notice n
+		WHERE 
+			grade = '2'
+		AND 
+			use_yn = 'Y'
+		<if test="searchWord != null">
+			AND n.title LIKE CONCAT('%',#{searchWord},'%')
+		</if>
+	</select>
+	
+	
+	<!-- 분류 번호: #13 - 외주업체 로그인 :: 메인 페이지-공지사항 상세보기 -->
+	<select id="selectBpoNoticeOne" parameterType="String" resultType="map">
+		SELECT 
+			n.news_no newsNo
+			, n.title title
+			, n.content content
+			, (SELECT cd_nm FROM common_code c WHERE c.crp_cd = 'W005' AND cd = n.category) category
+			, n.start_date startDate
+			, n.end_date endDate
+			, (SELECT emp_name FROM employee WHERE emp_no = n.reg_id) regiId
+			, (SELECT emp_name FROM employee WHERE emp_no = n.mod_id) modId
+		FROM 
+			news_notice n
+		WHERE 
+			n.news_no = #{newsNo}
+	</select>
+	
+	
+	<!-- 분류 번호: #5 - 외주업체 상세 페이지 :: 사용여부 상태변경 -->
+	<update id="updateBpoActive" parameterType="String">
+		UPDATE
+			outsourcing
+		SET
+			use_yn = #{useYn}
+		WHERE
+			outsourcing_no = #{outsourcingNo}
+	</update>
+	
+	
+	<!-- 분류 번호: #13 - 외주업체 로그인 :: 메인 페이지-비밀번호 수정 -->
+	<update id="updateBpoOutPw" parameterType="String">
+		UPDATE
+			outsourcing
+		SET
+			outsourcing_pw = SHA2(#{newPw}, 256)
+		WHERE
+			outsourcing_no = #{outsourcingNo}
+		AND
+			outsourcing_pw = SHA2(#{oldPw}, 256)
+	</update>
+</mapper>

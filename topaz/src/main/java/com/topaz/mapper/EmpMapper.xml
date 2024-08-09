@@ -1,0 +1,1021 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.topaz.mapper.EmpMapper">
+	
+	<!-- 분류 번호: #4 - 직원 등록  -->
+	<insert id="insertEmp" parameterType="com.topaz.dto.Employee">
+		INSERT INTO
+			employee(
+				emp_no,
+				emp_pw,
+				emp_name,
+				emp_dept,
+				emp_grade,
+				emp_gender,
+				emp_birth,
+				emp_phonenumber,
+				post_no,
+				address,
+				file_name,
+				emp_hiredate,
+				reg_time,
+				mod_time,
+				reg_id,
+				mod_id,
+				use_yn
+			)VALUES(
+				#{empNo},
+				SHA2(#{empPw}, 256),
+				#{empName},
+				#{empDept},
+				#{empGrade},
+				#{empGender},
+				#{empBirth},
+				#{empPhoneNumber},
+				#{postNo},
+				#{address},
+				#{fileName},
+				#{empHireDate},
+				NOW(),
+				NOW(),
+				#{empNo},
+				#{empNo},
+				'Y'
+			)
+	</insert>
+	
+	
+	<!-- 분류 번호 :  #4 - 직원번호 중복 확인 -->
+	<select id="selectEmpNo" parameterType="String" resultType="String">
+		SELECT
+			emp_no
+		FROM
+			employee
+		WHERE
+			emp_no = #{empNo}
+	</select>
+	
+	
+	<!-- 분류 번호 :  #4 - 전체 직원조회 -->
+	<select id="selectEmpAll" parameterType="Map" resultType="Map">
+		SELECT 
+			ROW_NUMBER() OVER (ORDER BY e.emp_hiredate) AS NO, 
+			e.emp_no empNo, 
+			e.emp_name empName, 
+		 	dept_code.cd_nm empDept, 
+		   	grade_code.cd_nm empGrade,
+			lv.year_count yearCnt, 
+			e.use_yn useYn
+		FROM
+			employee AS e
+		LEFT JOIN  
+			`leave` AS lv
+		ON 
+			e.emp_no = lv.emp_no
+		LEFT JOIN
+			common_code AS dept_code
+		ON
+			dept_code.cd = e.emp_dept
+			AND dept_code.crp_cd = 'E001'
+		LEFT JOIN
+			common_code AS grade_code
+		ON
+			grade_code.cd = e.emp_grade
+			AND grade_code.crp_cd = 'E002'
+		WHERE
+	        1=1
+			<if test="startDate != null and startDate != ''">
+			    AND e.emp_hiredate &gt;= #{startDate}
+			</if>
+			<if test="endDate != null and endDate != ''">
+			    AND e.emp_hiredate &lt;= #{endDate}
+			</if>
+			<if test="useYn != null and useYn != ''">
+			    AND e.use_yn = #{useYn}
+			</if>
+			<if test="empDept != null and empDept != ''">
+			    AND e.emp_dept = #{empDept}
+			</if>
+			<if test="empGrade != null and empGrade != ''">
+			    AND e.emp_grade = #{empGrade}
+			</if>
+			<if test="empNo != null and empNo != ''">
+			    AND e.emp_no LIKE CONCAT('%', #{empNo}, '%')
+			</if>
+		LIMIT #{currentPage}, #{rowPerPage};
+	</select>
+	
+	
+	<!-- 분류 번호 :  #4 - 전체 직원수 조회 -->
+	<select id="selectEmpAllCnt" resultType="int">
+		 SELECT 
+		 	COUNT(*)
+   		FROM employee e
+    	INNER JOIN 
+    		`leave` lv 
+   		ON 
+   			e.emp_no = lv.emp_no
+    	WHERE
+	        1=1
+	        <if test="startDate != null and startDate != ''">
+	            AND e.emp_hiredate &gt;= #{startDate}
+	        </if>
+	        <if test="endDate != null and endDate != ''">
+	            AND e.emp_hiredate &lt;= #{endDate}
+	        </if>
+	        <if test="useYn != null and useYn != ''">
+	            AND e.use_yn = #{useYn}
+	        </if>
+	        <if test="empDept != null and empDept != ''">
+	            AND e.emp_dept = #{empDept}
+	        </if>
+	        <if test="empGrade != null and empGrade != ''">
+	            AND e.emp_grade = #{empGrade}
+	        </if>
+	        <if test="empNo != null and empNo != ''">
+	            AND e.emp_no = #{empNo}
+	        </if>
+	</select>
+	
+	
+	<!-- 분류 번호 :  #4 - 직원 상세 조회 -->
+	<select id="selectEmpOne" resultType="Map">
+		SELECT
+			e.emp_no empNo, 
+			e.emp_pw empPw, 
+			e.emp_name empName, 
+			dept_code.cd_nm empDept,  
+			grade_code.cd_nm empGrade, 
+			e.emp_gender empGender, 
+			e.emp_birth empBirth, 
+			e.emp_phonenumber empPhoneNumber, 
+			e.post_no postNo, 
+			e.address address, 
+			e.emp_hiredate empHireDate,
+			e.file_name fileName
+		FROM 
+			employee e
+		LEFT JOIN
+			common_code AS dept_code
+		ON 
+			e.emp_dept = dept_code.cd
+			AND dept_code.crp_cd = 'E001'
+		LEFT JOIN
+			common_code AS  grade_code
+		ON
+			e.emp_grade = grade_code.cd
+			AND grade_code.crp_cd = 'E002'
+		LEFT JOIN
+			file_upload AS upload
+		ON	
+			e.emp_no = upload.reference_no
+			AND upload.file_name = e.file_name
+		WHERE
+			e.emp_no = #{empNo}
+	</select>
+	 
+	
+	 <!-- 분류 번호 :  #2 - 나의 휴가 조회 -->
+	 <select id="selectMyLeave" parameterType="Map" resultType="Map">
+	 	SELECT
+			e.emp_name empName,
+			emp_dept.cd_nm empDept,
+			DATE_FORMAT(lh.start_time, '%Y-%m-%d') startTime, 
+			DATE_FORMAT(lh.end_time, '%Y-%m-%d') endTime,
+			lh.leave_count leaveCount,
+			leave_content.cd_nm leaveContent	
+		FROM
+			leave_history AS lh
+		LEFT JOIN
+			employee AS e
+		ON
+			lh.emp_no = e.emp_no
+		LEFT JOIN
+			common_code AS leave_content
+		ON
+			leave_content.cd = lh.leave_type AND
+			leave_content.crp_cd = 'E003'
+		LEFT JOIN
+			common_code AS emp_dept
+		ON
+			emp_dept.cd = e.emp_dept AND
+			emp_dept.crp_cd = 'E001'
+		WHERE
+			e.emp_no = #{empNo} AND
+			lh.use_yn = 'Y'
+	 	<if test="startDate != null and startDate != ''">
+		    AND DATE(lh.start_time) &gt;= #{startDate}
+		</if>
+		<if test="endDate != null and endDate != ''">
+		    AND DATE(lh.end_time) &lt;= #{endDate}
+	    </if>
+	    ORDER BY lh.leave_history_no DESC
+	    LIMIT #{currentPage}, #{rowPerPage}
+	 </select>
+	 
+	 
+	 <!-- 분류 번호 :  #4 - 나의 휴가 사용 수 조회  -->
+	 <select id="selectMyLeaveCnt" parameterType="Map" resultType="int">
+	 	SELECT
+			COUNT(*)
+		FROM
+			leave_history AS lh
+		WHERE 
+			lh.emp_no = #{empNo} AND
+			lh.use_yn = 'Y'
+	 	<if test="startDate != null and startDate != ''">
+		    AND DATE(lh.start_time) &gt;= #{startDate}
+		</if>
+		<if test="endDate != null and endDate != ''">
+		    AND DATE(lh.end_time) &lt;= #{endDate}
+	    </if>
+	 </select>
+	 
+	 
+	 <!--  분류 번호 :  #4 - 나의 남은 휴가 수 조회 -->
+	 <select id="selectLeaveCnt" parameterType="Map"  resultType="Map">
+	 	SELECT 
+		   l.year_count - COALESCE(SUM(CASE WHEN lh.leave_type IN ('Y', 'H')THEN lh.leave_count ELSE 0 END), 0) AS yearCnt,
+		   l.month_count - COALESCE(SUM(CASE WHEN lh.leave_type = 'M' THEN lh.leave_count ELSE 0 END), 0) AS monthCnt
+		FROM 
+		   `leave` l
+		LEFT JOIN 
+		   leave_history lh 
+		ON 
+		   l.emp_no = lh.emp_no AND
+		   lh.start_time &gt;= DATE_FORMAT(NOW() ,'%Y-01-01 00:00:00') AND 
+		   lh.end_time &lt;= DATE_FORMAT(NOW() ,'%Y-12-31 23:59:59')
+		WHERE 
+		   l.use_yn = 'Y' AND
+		   l.emp_no = #{empNo}
+	 </select>
+	 
+	 
+	 <!-- 분류 번호 :  #4 - 직원 정보 수정 -->
+	<update id="modifyEmpOne" parameterType="Map">
+	 	UPDATE 
+			employee 
+        SET
+            emp_dept = #{empDept},
+            emp_grade = #{empGrade},
+            emp_phonenumber = #{empPhoneNumber},
+            post_no = #{postNo},
+            address = #{address},
+            mod_time = NOW(),
+            mod_id = #{empNo}
+        WHERE 
+        	emp_no = #{empNo}
+	</update>
+	
+	
+	<!-- 분류 번호 :  #4 - 직원 정보 삭제 -->
+	<update id="deleteEmpOne" parameterType="com.topaz.dto.Employee">
+		UPDATE
+			employee AS e
+		LEFT JOIN
+			commute_history AS ch
+		ON 
+			e.emp_no = ch.emp_no
+		LEFT JOIN
+			file_upload AS fu
+		ON
+			e.emp_no = fu.reference_no
+		LEFT JOIN
+			`leave` AS l
+		ON
+			e.emp_no = l.emp_no
+		LEFT JOIN
+			leave_history AS lh
+		ON
+			e.emp_no = lh.emp_no
+		SET
+			e.use_yn = 'N',
+			ch.use_yn = 'N',
+			fu.use_yn = 'N',
+			l.use_yn = 'N',
+			lh.use_yn = 'N'
+		WHERE
+			e.emp_no = #{empNo}
+	</update>
+	
+	
+	<!-- 분류 번호 :  #4 - 직원 휴가 등록 -->
+	<insert id="insertEmpLeave" parameterType="Map">
+		INSERT INTO 
+			`leave`(
+				emp_no,
+				emp_grade,
+				year_count,
+				month_count,
+				reg_id,
+				reg_time,
+				mod_id,
+				mod_time,
+				use_yn
+			)VALUES(
+				#{empNo},
+				#{empGrade},
+				#{yearCnt},
+				#{monthCnt},
+				#{empNo},
+				NOW(),
+				#{empNo},
+				NOW(),
+				'Y'
+			)
+	</insert>
+	
+	<!-- 분류 번호 :  #4 - 직원 휴가 수정 -->
+	<update id="updateEmpLeave" parameterType="Map">
+		UPDATE
+			`leave`
+		SET
+			emp_grade = #{empGrade},
+			year_count = #{yearCnt},
+			mod_time = NOW()
+		WHERE
+			emp_no = #{empNo}
+	</update>
+	
+	
+	<!-- 분류 번호 :  #4 - 직원 비밀번호 수정 -->
+	<update id="modifyEmpPw" parameterType="com.topaz.dto.Employee">
+	 	UPDATE 
+			employee 
+        SET
+           	emp_pw = SHA2(#{newPw}, 256),
+           	mod_time = NOW()
+        WHERE 
+        	emp_no = #{empNo}
+	</update>
+	
+	
+	<!-- 분류 번호 :  #2 - 변경 비밀번호 중복 확인 -->
+	<select id="selectNewPw" parameterType="map" resultType="String">
+		SELECT
+			old_pw
+		FROM
+			old_pw_history
+		WHERE
+			user_no = #{empNo} AND  user_part = 'E' AND old_pw = SHA2(#{newPw}, 256)
+	</select>
+	
+	
+	<!-- 분류 번호 :  #2 - 이전 비밀번호 저장 -->
+	<insert id="insertNewPw"  parameterType="map">
+		INSERT INTO 
+			old_pw_history(
+				old_pw_no,
+				user_no,
+				user_part,
+				old_pw,
+				reg_time,
+				mod_time,
+				reg_id,
+				mod_id,
+				use_yn
+			)VALUES(
+				CURRENT_TIMESTAMP(5),
+				#{empNo},
+				'E',
+				SHA2(#{newPw}, 256),
+				NOW(),
+				NOW(),
+				#{empNo},
+				#{empNo},
+				'N'
+			)
+	</insert>
+	
+	
+	<!-- 분류 번호 :  #4 - 전체 직원조회(조직도) -->
+	<select id="selectEmpAllInChart" resultType="Map">
+		SELECT 
+			emp_no empNo,
+			emp_name empName, 
+			dept_code.cd_nm empDept, 
+			grade_code.cd_nm empGrade, 
+			file_name
+		FROM 
+			employee AS e
+		LEFT JOIN
+			common_code AS grade_code
+		ON 
+			e.emp_grade = grade_code.cd
+			AND grade_code.crp_cd = 'E002'
+		LEFT JOIN
+			common_code AS dept_code
+		ON 
+			e.emp_dept = dept_code.cd
+			AND dept_code.crp_cd = 'E001'
+		WHERE
+			e.use_yn = 'Y'
+	</select>
+	
+	
+	<!-- 분류 번호 :  #4 - 전체 직원 근무 조회 -->
+	<select id="selectEmpAttendance" resultType="Map">
+		SELECT
+			DATE(ch.start_time) date, 
+			em.emp_name empName, 
+			ch.emp_no empNo, 
+			DATE_FORMAT(ch.start_time, '%H:%i:%s') strTime, 
+			DATE_FORMAT(ch.end_time, '%H:%i:%s') endTime
+		FROM
+			commute_history AS ch
+		LEFT JOIN
+			employee em
+		ON
+			ch.emp_no = em.emp_no
+		WHERE
+        1=1
+       	<if test="startDateHidden  != null and startDateHidden  != ''">
+		    AND ch.start_time &gt;= #{startDateHidden}
+		</if>
+		<if test="endDateHidden  != null and endDateHidden  != ''">
+		    AND ch.end_time &lt;= #{endDateHidden} 
+		</if>
+        <if test="empNo != null and empNo != ''">
+            AND em.emp_no LIKE CONCAT('%', #{empNo}, '%')
+        </if>
+        <if test="empName != null and empName != ''">
+            AND em.emp_name LIKE CONCAT('%', #{empName}, '%')
+        </if>
+        	ORDER BY ch.reg_time DESC
+        LIMIT #{currentPage}, #{rowPerPage}
+	</select>
+	
+	
+	<!-- 분류 번호 :  #4 - 전체 직원 근무수 조회 -->
+	<select id="selectEmpAttendanceAllCnt" resultType="int">
+		SELECT
+			COUNT(*)
+		FROM
+			commute_history AS ch
+		LEFT JOIN
+			employee em
+		ON
+			ch.emp_no = em.emp_no
+		WHERE
+        	1=1
+      	<if test="startDateHidden  != null and startDateHidden  != ''">
+		    AND ch.start_time &gt;= #{startDateHidden }
+		</if>
+		<if test="endDateHidden  != null and endDateHidden  != ''">
+		    AND ch.end_time &lt;= #{endDateHidden}
+		</if>
+        <if test="empNo != null and empNo != ''">
+            AND em.emp_no = #{empNo}
+        </if>
+        <if test="empName != null and empName != ''">
+            AND em.emp_name = #{empName}
+        </if>
+	</select>
+	
+	<!-- 분류 번호 :  #4 - 전체 직원 잔여 휴가 조회 -->
+	<select id="selectEmpLeave" parameterType="Map" resultType="Map">
+		SELECT
+			e.emp_no empNo,
+			e.emp_name empName,
+			dept.cd_nm empDept,
+			grade.cd_nm empGrade,
+			l.year_count curYearLeave,
+			l.month_count curMonthLeave,
+			l.year_count - COALESCE(SUM(CASE WHEN lh.leave_type IN ('Y', 'H') THEN lh.leave_count ELSE 0 END), 0) AS yearCnt,
+			l.month_count - COALESCE(SUM(CASE WHEN lh.leave_type = 'M' THEN lh.leave_count ELSE 0 END), 0) AS monthCnt,
+			e.use_yn useYN
+		FROM 
+		   `leave` l
+		LEFT JOIN 
+		   leave_history lh 
+		ON 
+		   l.emp_no = lh.emp_no 
+			AND lh.start_time &gt;= DATE_FORMAT(NOW() ,'%Y-01-01 00:00:00') 
+			AND lh.end_time &lt;= DATE_FORMAT(NOW() ,'%Y-12-31 23:59:59')
+		LEFT JOIN
+			employee AS e
+		ON
+			l.emp_no = e.emp_no
+		LEFT JOIN
+			common_code dept
+		ON
+			dept.cd = e.emp_dept AND
+			dept.crp_cd = 'E001'
+		LEFT JOIN
+			common_code grade
+		ON
+			grade.cd = e.emp_grade AND
+			grade.crp_cd = 'E002'
+		WHERE
+			1=1
+		<if test="empNo != null and empNo != ''">
+            AND e.emp_no LIKE CONCAT('%', #{empNo}, '%')
+        </if>
+        <if test="empName != null and empName != ''">
+            AND e.emp_name LIKE CONCAT('%', #{empName}, '%')
+        </if>
+        GROUP BY
+   			e.emp_no, e.emp_name, dept.cd_nm, grade.cd_nm, l.year_count, l.month_count, e.use_yn
+		ORDER BY e.emp_hiredate DESC
+        LIMIT #{currentPage}, #{rowPerPage}
+	</select>
+
+	<!-- 분류 번호 :  #4 - 전체 직원 잔여 휴가 수 조회  -->
+	<select id="selectEmpLeaveCnt" parameterType="Map" resultType="int">
+		SELECT
+			COUNT(*)
+		FROM
+			`leave` AS l
+		LEFT JOIN
+			employee AS e
+		ON
+			l.emp_no = e.emp_no
+		LEFT JOIN
+			common_code dept
+		ON
+			dept.cd = e.emp_dept AND
+			dept.crp_cd = 'E001'
+		LEFT JOIN
+			common_code grade
+		ON
+			grade.cd = e.emp_grade AND
+			grade.crp_cd = 'E002'
+		WHERE
+			1=1
+		 <if test="empNo != null and empNo != ''">
+         	AND e.emp_no = #{empNo}
+        </if>
+       	<if test="empName != null and empName != ''">
+            AND e.emp_name = #{empName}
+   		</if>
+	</select>
+	
+	
+	<!--  분류 번호 :  #3 - 월차 자동 입력  -->
+	<update id="updateMonthLeave" >
+		UPDATE leave l
+		JOIN (
+		    SELECT
+		        emp_no,
+		        COUNT(*) AS workDay
+		    FROM
+		        commute_history
+		    WHERE
+		        DATE_FORMAT(start_time, '%Y-%m') = DATE_FORMAT(CURDATE(), '%Y-%m') AND
+		        DAYOFWEEK(start_time) BETWEEN 2 AND 6
+		    GROUP BY emp_no
+		) c
+		ON l.emp_no = c.emp_no
+		SET l.month_count = CASE
+		    WHEN l.month_count IS NULL THEN 1
+		    ELSE l.month_count + 1
+		END
+		WHERE c.workDay >= 18;
+	</update>
+	
+	
+	
+	<!-- ========= 쪽지 ========= -->
+	
+	
+	<!-- 분류 번호 :  #2 -  쪽지 전송할 직원 조회  -->
+	<select id="selectEmpName" parameterType="String" resultType="map">
+		SELECT 
+			em.emp_name empName, 
+			cm.cd_nm empDept,
+			em.emp_no empNo
+		FROM
+			employee em
+		INNER JOIN
+			common_code cm
+		ON 
+			em.emp_dept = cm.cd
+			AND cm.crp_cd = 'E001' 
+		WHERE
+			em.emp_name LIKE CONCAT('%', #{empName}, '%')
+	</select>
+	
+	
+	<!--  분류 번호 :  #2 - 수신 쪽지 조회 -->
+	<select id="selectNoteReceived" parameterType="Map" resultType="Map">
+		SELECT 
+			 ROW_NUMBER() OVER (ORDER BY nt.send_time DESC) AS no,
+			 nt.note_id noteId,
+			 em.emp_name empName,
+			 em.emp_no empNo,
+			 cm.cd_nm empDept,
+			 nt.sender_id sendId, 
+			 nt.note_content noteContent, 
+			 DATE_FORMAT(nt.send_time, '%Y-%m-%d %H:%i:%s') sendTime
+		FROM 
+			note_history nt
+		INNER JOIN
+			employee em
+		ON
+			nt.sender_id = em.emp_no
+		INNER JOIN
+			common_code cm
+		ON
+			em.emp_dept = cm.cd
+			AND cm.crp_cd = 'E001'
+		WHERE
+			nt.receiver_id = #{empNo} AND
+			nt.receiver_delete = 'N' AND
+			nt.use_yn = 'Y'
+		LIMIT #{currentPage}, #{rowPerPage}
+	</select>
+	
+	
+	<!--  분류 번호 :  #2 - 수신 쪽지수 조회  -->
+	<select id="selectNoteReceivedCnt" parameterType="Map" resultType="int">
+		SELECT 
+			COUNT(*)
+		FROM 
+			note_history
+		WHERE
+			receiver_id = #{empNo} AND
+			receiver_delete = 'N' AND
+			use_yn = 'Y' 
+	</select>
+	
+
+	<!-- 분류 번호 :  #2 - 발신 쪽지 삭제 -->
+	<update id="deleteSenNote" >
+		UPDATE
+			note_history
+		SET 
+			sender_delete = 'Y',
+			mod_time = NOW()
+		WHERE
+			note_id IN
+		<foreach item="noteId" collection="noteIds" open="(" separator="," close=")">
+			#{noteId}
+		</foreach>
+	</update>
+	
+	
+	<!-- 분류 번호 :  #2 - 수신  쪽지 삭제 -->
+	<update id="deleteRecNote" >
+		UPDATE
+			note_history
+		SET 
+			receiver_delete = 'Y',
+			mod_time = NOW()
+		WHERE
+			note_id IN
+		<foreach item="noteId" collection="noteIds" open="(" separator="," close=")">
+			#{noteId}
+		</foreach>
+	</update>
+	
+	
+	<!-- 분류 번호 :  #2 -  쪽지 삭제 -->
+	<update id="deleteNote" >
+		UPDATE
+			note_history
+		SET 
+			use_yn = 'N',
+			mod_time = NOW()
+		WHERE
+			note_id IN
+		<foreach item="noteId" collection="noteIds" open="(" separator="," close=")">
+			#{noteId}
+		</foreach>
+	</update>
+	
+	
+	<!-- 분류 번호 :  #2 -  쪽지 상세 보기 -->
+	<select id="selectNoteDetail" resultType="Map" >		
+		SELECT 
+			nt.note_id noteId,
+			em.emp_name empName,
+			cm.cd_nm empDept,
+			nt.sender_id senderId,
+			nt.note_content noteContent,
+			DATE_FORMAT(nt.send_time, '%Y-%m-%d %H:%i:%s') sendTime
+		FROM
+			note_history nt
+		INNER JOIN
+			employee em
+		ON
+			nt.sender_id = em.emp_no
+		INNER JOIN
+			common_code cm
+		ON
+			em.emp_dept = cm.cd
+			AND cm.crp_cd = 'E001'
+		WHERE
+			note_id = #{noteId}
+	</select>
+	
+	
+	<!--  분류 번호 :  #2 - 휴지통 쪽지 조회 -->
+	<select id="selectNoteTrash" parameterType="Map" resultType="Map">
+		  SELECT 
+	        ROW_NUMBER() OVER (ORDER BY nt.send_time DESC) AS no,
+	        nt.note_id noteId,
+	        se.emp_no empNo,
+	        cm.cd_nm empDept,
+	        se.emp_name senderName,
+	        se.emp_no sendId,
+	        nt.note_content noteContent, 
+	        DATE_FORMAT(nt.send_time, '%Y-%m-%d %H:%i:%s') sendTime
+	    FROM 
+	        note_history nt
+	    LEFT JOIN
+	        employee se ON nt.sender_id = se.emp_no
+	    LEFT JOIN
+	        employee re ON nt.receiver_id = re.emp_no
+        INNER JOIN
+			common_code cm
+		ON
+			se.emp_dept = cm.cd
+			AND cm.crp_cd = 'E001'
+	    WHERE
+	        ((nt.receiver_id = #{empNo} AND nt.receiver_delete = 'Y') OR 
+	         (nt.sender_id = #{empNo} AND nt.sender_delete = 'Y')) AND
+	        nt.use_yn = 'Y'
+	    LIMIT #{currentPage}, #{rowPerPage}
+	</select>
+	
+	
+	<!--  분류 번호 :  #2 - 휴지통 쪽지수 조회  -->
+	<select id="selectNoteTrashCnt" parameterType="Map" resultType="int">
+		SELECT 
+			COUNT(*)
+		FROM 
+			note_history
+		WHERE
+			(receiver_id = #{empNo} OR sender_id = #{empNo}) AND
+        	(sender_delete = 'Y' OR receiver_delete = 'Y') AND
+			use_yn = 'Y'
+	</select>
+	
+	
+	<!-- 분류 번호 :  #2 -  쪽지 복구 -->
+	<update id="restorationNote" >
+		UPDATE
+	        note_history
+	    SET 
+	        mod_time = NOW(),
+	        receiver_delete = CASE 
+	            WHEN receiver_id = #{empNo} THEN 'N' 
+	            ELSE receiver_delete 
+	        END,
+	        sender_delete = CASE 
+	            WHEN sender_id = #{empNo} THEN 'N' 
+	            ELSE sender_delete 
+	        END
+	    WHERE
+	        note_id IN
+	        <foreach item="noteId" collection="noteIds" open="(" separator="," close=")">
+	            #{noteId}
+	        </foreach>
+	        AND (
+	            (receiver_id = #{empNo} AND receiver_delete = 'Y') OR
+	            (sender_id = #{empNo} AND sender_delete = 'Y')
+	        )
+	</update>
+	
+	
+	<!--  분류 번호 :  #2 - 발신 쪽지 조회 -->
+	<select id="selectNoteList" parameterType="Map" resultType="Map">
+		SELECT 
+			 ROW_NUMBER() OVER (ORDER BY nt.send_time DESC) AS no,
+			 nt.note_id noteId,
+			 em.emp_name empName,
+		 	 cm.cd_nm empDept,
+			 nt.receiver_id receiverId, 
+			 nt.note_content noteContent, 
+			 DATE_FORMAT(nt.send_time, '%Y-%m-%d %H:%i:%s') sendTime
+		FROM 
+			note_history nt
+		INNER JOIN
+			employee em
+		ON
+			nt.receiver_id = em.emp_no
+		INNER JOIN
+			common_code cm
+		ON
+			em.emp_dept = cm.cd
+			AND cm.crp_cd = 'E001'
+		WHERE
+			nt.sender_id = #{empNo} AND
+			nt.sender_delete = 'N' AND
+			nt.use_yn = 'Y'
+		LIMIT #{currentPage}, #{rowPerPage}
+	</select>
+	
+	
+	<!--  분류 번호 :  #2 - 발신 쪽지수 조회  -->
+	<select id="selectNoteListCnt" parameterType="Map" resultType="int">
+		SELECT 
+			COUNT(*)
+		FROM 
+			note_history
+		WHERE
+			sender_id = #{empNo} AND
+			sender_delete = 'N' AND
+			use_yn = 'Y'
+	</select>
+	
+	
+	<!--  분류 번호 :  #2 - 쪽지 전송  -->
+	<insert id="insertNote" parameterType="Map">
+	        INSERT INTO note_history
+	        (
+	            note_id,
+	            sender_id,
+	            receiver_id,
+	            note_content,
+	            send_time,
+	            receive_time,
+	            reg_time,
+	            mod_time,
+	            reg_id,
+	            mod_id,
+	            sender_delete,
+	            receiver_delete,
+	            use_yn
+	        )
+	        VALUES
+       	<foreach collection="recipients" item="recipient" index="index"  separator=",">
+	        (
+	            DATE_ADD(CURRENT_TIMESTAMP(5), INTERVAL ${index}/10000 SECOND),
+	            #{senderId},
+	            #{recipient},
+	            #{noteContent},
+	            NOW(),
+	            NULL,
+	            NOW(),
+	            NOW(),
+	            #{senderId},
+	            #{senderId},
+	            'N',
+	            'N',
+	            'Y'
+	        )
+    	</foreach>
+	</insert>
+	
+	
+	<!--  분류 번호 :  #2 - 쪽지 수신 업데이트  -->
+	<update id="updateEmpNoteState">
+		UPDATE 
+			note_history
+		SET
+			receive_time = NOW()
+		WHERE
+			note_id = #{noteId};
+	</update>
+	
+	
+	<!--  분류 번호 :  #2 - 개인 수신 쪽지수 조회  -->
+	<select id="selectEmpNotRecCnt" parameterType="Map" resultType="int">
+		SELECT 
+			COUNT(*),
+			receiver_id reciverId,
+			note_id noteId
+		FROM 
+			note_history
+		WHERE
+			receiver_id = #{receiverId}
+			AND
+			receive_time IS NULL;
+	</select>
+	
+	
+	<!--  분류 번호 :  #2 - 나의 발신 쪽지 수 보기  -->
+	<select id="selectMyNoteSendCnt" parameterType="String" resultType="Map">
+		SELECT 'day' period, COUNT(*) sentCnt
+	    FROM note_history
+	    WHERE sender_id = #{empNo}
+	      AND DATE(send_time) = CURDATE()
+	    UNION ALL
+	    SELECT 'week' period, COUNT(*) sentCnt
+	    FROM note_history
+	    WHERE sender_id = #{empNo}
+	      AND DATE(send_time) >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+	    UNION ALL
+	    SELECT 'month' period, COUNT(*) sentCnt
+	    FROM note_history
+	    WHERE sender_id = #{empNo}
+	      AND DATE(send_time) >= DATE_SUB(CURDATE(), INTERVAL 1 MONTH);
+	</select>
+	
+	
+	<!--  분류 번호 :  #2 - 나의 수신 쪽지 수 보기  -->
+	<select id="selectMyNoteRecCnt" parameterType="String" resultType="Map">
+		SELECT 'day' period, COUNT(*) recCnt
+	    FROM note_history
+	    WHERE receiver_id = #{empNo}
+	      AND DATE(receive_time) = CURDATE()
+	    UNION ALL
+	    SELECT 'week' period, COUNT(*) recCnt
+	    FROM note_history
+	    WHERE receiver_id = #{empNo}
+	      AND DATE(receive_time) >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+	    UNION ALL
+	    SELECT 'month' period, COUNT(*) recCnt
+	    FROM note_history
+	    WHERE receiver_id = #{empNo}
+	      AND DATE(receive_time) >= DATE_SUB(CURDATE(), INTERVAL 1 MONTH);
+	</select>
+
+
+	<!--  분류 번호 :  #4 - 부서별 발신 쪽지 수 보기  -->
+	<select id="selectDeptNoteSendCnt" parameterType="String" resultType="Map">
+		SELECT 
+		    cc.cd_nm AS dept,
+		    'day' AS period,
+		    COUNT(nh.note_id) AS sendCnt
+		FROM common_code cc
+		LEFT JOIN employee em 
+		ON  cc.cd = em.emp_dept
+		LEFT JOIN note_history nh 
+		ON em.emp_no = nh.sender_id
+		    AND DATE(nh.send_time) = CURDATE()
+		WHERE cc.crp_cd = 'E001'
+		GROUP BY cc.cd_nm
+		    
+		UNION ALL
+		
+		SELECT 
+		    cc.cd_nm AS dept,
+		    'week' AS period,
+		    COUNT(nh.note_id) AS sendCnt
+		FROM common_code cc
+		LEFT JOIN employee em 
+		ON cc.cd = em.emp_dept
+		LEFT JOIN note_history nh 
+		ON em.emp_no = nh.sender_id
+		    AND nh.send_time >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+		WHERE cc.crp_cd = 'E001'
+		GROUP BY cc.cd_nm
+		
+		UNION ALL
+		
+		SELECT 
+		    cc.cd_nm AS dept,
+		    'month' AS period,
+		    COUNT(nh.note_id) AS sendCnt
+		FROM common_code cc
+		LEFT JOIN employee em 
+		ON cc.cd = em.emp_dept
+		LEFT JOIN note_history nh 
+		ON em.emp_no = nh.sender_id
+		    AND nh.send_time >= DATE_SUB(CURDATE(), INTERVAL 1 MONTH)
+		WHERE cc.crp_cd = 'E001'
+		GROUP BY cc.cd_nm
+	</select>
+	
+	
+	<!--  분류 번호 :  #4 - 부서별 수신 쪽지 수 보기  -->
+	<select id="selectDeptNoteRecCnt" parameterType="String" resultType="Map">
+		SELECT 
+		    cc.cd_nm AS dept,
+		    'day' AS period,
+		    COUNT(nh.note_id) AS receiveCnt
+		FROM common_code cc
+		LEFT JOIN employee em 
+		ON cc.cd = em.emp_dept
+		LEFT JOIN note_history nh 
+		ON em.emp_no = nh.receiver_id
+		    AND DATE(nh.receive_time) = CURDATE()
+		WHERE cc.crp_cd = 'E001'
+		GROUP BY cc.cd_nm
+		
+		UNION ALL
+		
+		SELECT 
+		    cc.cd_nm AS dept,
+		    'week' AS period,
+		    COUNT(nh.note_id) AS receiveCnt
+		FROM common_code cc
+		LEFT JOIN employee em 
+		ON cc.cd = em.emp_dept
+		LEFT JOIN note_history nh 
+		ON em.emp_no = nh.receiver_id
+		    AND nh.receive_time >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+		WHERE cc.crp_cd = 'E001'
+		GROUP BY cc.cd_nm
+		
+		UNION ALL
+		
+		SELECT 
+		    cc.cd_nm AS dept,
+		    'month' AS period,
+		    COUNT(nh.note_id) AS receiveCnt
+		FROM common_code cc
+		LEFT JOIN employee em 
+		ON cc.cd = em.emp_dept
+		LEFT JOIN note_history nh 
+		ON em.emp_no = nh.receiver_id
+		    AND nh.receive_time >= DATE_SUB(CURDATE(), INTERVAL 1 MONTH)
+		WHERE cc.crp_cd = 'E001'
+		GROUP BY cc.cd_nm;
+	</select>
+	
+	
+	
+</mapper>

@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.topaz.mapper.VolunteerMapper">
+
+
+	<!-- 분류번호: #9 - 봉사 일정 페이지 : 전체 리스트 -->
+	<select id="selectVolunteerList" resultType="map">
+		SELECT 
+			vol_no volNo, 
+			vol_content volContent, 
+			DATE_FORMAT(vol_starttime, '%Y-%m-%d %H:%i') volStartTime ,
+			DATE_FORMAT(vol_endtime, '%Y-%m-%d %H:%i') volEndTime , 
+			vol_people volPeople
+		FROM volunteer
+		WHERE use_yn = (SELECT cd FROM common_code WHERE crp_cd = 'A002' AND cd = 'Y');
+	</select>
+
+	<!-- 분류번호: #9 - 봉사 일정 페이지 : 일정 상세보기 -->
+	<select id="selectVolunteerOne" parameterType="String" resultType="com.topaz.dto.Volunteer">
+		SELECT 
+			vol_no volNo, 
+			vol_content volContent, 
+			DATE_FORMAT(vol_starttime, '%Y-%m-%d %H:%i') volStartTime ,
+			DATE_FORMAT(vol_endtime, '%Y-%m-%d %H:%i') volEndTime , 
+			vol_people volPeople,
+			(SELECT emp_name FROM employee WHERE emp_no = v.reg_id) regId,
+			(SELECT emp_name FROM employee WHERE emp_no = v.mod_id) modId
+		FROM volunteer v
+		WHERE use_yn = (SELECT cd FROM common_code WHERE crp_cd = 'A002' AND cd = 'Y')
+		AND vol_no = #{volNo};
+	</select>
+
+	<!-- 분류번호: #9 - 봉사 일정 페이지 : 일정 수정하기 -->
+	<update id="modifyVolunteer" parameterType="com.topaz.dto.Volunteer">
+		UPDATE volunteer 
+		SET 
+			vol_content = #{volContent}, 
+			vol_starttime = #{volStartTime},
+			vol_endtime = #{volEndTime}, 
+			vol_people = #{volPeople},
+			mod_id = #{modId},
+			mod_time = NOW()
+		WHERE vol_no = #{volNo};
+	</update>
+	
+	<!-- 분류번호: #9 - 봉사 일정 페이지 : 일정 등록하기 -->
+	<insert id="addVolunteer" parameterType="com.topaz.dto.Volunteer">
+		INSERT INTO volunteer 
+			(vol_no, 
+			 vol_content, 
+			 vol_starttime, 
+			 vol_endtime, 
+			 vol_people, 
+			 reg_id, 
+			 reg_time, 
+			 mod_id, 
+			 mod_time, 
+			 use_yn)
+		VALUES
+			(CURRENT_TIMESTAMP(5), 
+			 #{volContent}, 
+			 #{volStartTime},
+			 #{volEndTime}, 
+			 #{volPeople},
+			 #{regId},
+			 NOW(), 
+			 #{modId},
+			 NOW(), 
+			 'Y'
+			 )
+	</insert>
+	
+	<!-- 분류번호: #9 - 봉사 일정 페이지 : 일정 삭제하기 -->
+	<update id="deleteVolunteer" parameterType="com.topaz.dto.Volunteer">
+		UPDATE volunteer 
+		SET 
+			use_yn = 'N',
+			mod_time = NOW(),
+			mod_id  = #{modId}
+		WHERE vol_no = #{volNo};
+	</update>
+	
+	<!-- 분류번호: #9 - 봉사 신청 리스트 페이지 : 봉사 신청 전체 조회 -->
+	<select id="selectVolAppList" resultType="map">
+		SELECT 
+			vol_app_no volAppNo,
+			vol_content volContent, 
+			vol_people volPeople,
+			DATE_FORMAT(vol_starttime, '%Y-%m-%d %H:%i') volStarttime ,
+			va.gst_id gstId, 
+			va.vol_app_people volAppPeople, 
+			va.vol_app_comment volAppComment, 
+			(SELECT cd_nm FROM common_code WHERE crp_cd = 'W003' AND cd = vol_app_state) volAppState
+		FROM volunteer_application va
+			INNER JOIN volunteer v
+			ON va.vol_no = v.vol_no 
+		<where>
+			va.use_yn = (SELECT cd FROM common_code WHERE crp_cd = 'A002' AND cd = 'Y')
+			<if test="searchWord != null and searchWord != ''">
+				AND v.vol_content LIKE CONCAT('%', #{searchWord},'%')
+			</if>
+			<if test="searchDate != null and searchDate != ''">
+				AND v.vol_starttime LIKE CONCAT('%', #{searchDate},'%')
+			</if>
+		</where>
+		ORDER BY va.reg_time DESC
+		LIMIT #{beginRow}, #{rowPerPage}
+	</select>
+	
+	<!-- 분류번호: #9 - 봉사 신청 리스트 페이지 : 봉사 신청 전체 행 수 조회 -->
+	<select id="selectVolAppListTotalRow" resultType="int">
+		SELECT COUNT(*) cnt
+		FROM volunteer_application va
+			INNER JOIN volunteer v
+			ON va.vol_no = v.vol_no 
+		<where>
+			va.use_yn = (SELECT cd FROM common_code WHERE crp_cd = 'A002' AND cd = 'Y')
+			<if test="searchWord != null">
+				AND v.vol_content LIKE CONCAT('%',#{searchWord},'%')
+			</if>
+			<if test="searchDate != null">
+				AND v.vol_starttime LIKE CONCAT('%',#{searchDate},'%')
+			</if>
+		</where>
+	
+	</select>
+	
+	<!-- 분류번호: #9 - 봉사 신청 페이지 : 봉사 신청 등록하기 -->
+	<insert id="addVolApp" parameterType="com.topaz.dto.VolunteerApplication">
+		INSERT INTO volunteer_application
+			(vol_app_no, 
+			 vol_no, 
+			 gst_id, 
+			 vol_app_people, 
+			 vol_app_comment, 
+			 vol_app_state, 
+			 reg_id, 
+			 reg_time, 
+			 mod_id, 
+			 mod_time, 
+			 use_yn)
+		VALUES
+			(CURRENT_TIMESTAMP(5), 
+			 #{volNo}, 
+			 #{gstId}, 
+			 #{volAppPeople}, 
+			 #{volAppComment}, 
+			 '1',
+			 #{gstId},
+			 NOW(),
+			 #{gstId},
+			 NOW(),
+			 'Y'
+			 )
+	</insert>
+	
+	<!-- 분류번호: #9 - 봉사 신청 상세 페이지 : 봉사 정보, 신청자 정보 상세 -->
+	<select id="selectVolAppOne" parameterType="String" resultType="map">
+		SELECT 	
+			va.vol_app_no volAppNo, 
+			va.vol_no volNo,
+			va.vol_app_people volAppPeople, 
+			va.vol_app_comment volAppComment, 
+			va.vol_app_state volAppState, 
+			va.gst_id gstId,
+			v.vol_content volContent,
+			v.vol_people volPeople,
+			DATE_FORMAT(v.vol_starttime, '%Y-%m-%d %H:%i') volStartTime,
+			DATE_FORMAT(v.vol_endtime, '%Y-%m-%d %H:%i') volEndTime,
+			g.gst_name gstName,
+			(SELECT cd_nm FROM common_code WHERE crp_cd = 'A001' AND cd = g.gst_gender) gstGender,
+			g.gst_birth gstBirth,
+			g.gst_phone gstPhone
+		FROM volunteer_application va 
+			INNER JOIN volunteer v
+			ON va.vol_no = v.vol_no
+			INNER JOIN guest g 
+			ON va.gst_id = g.gst_id 
+		WHERE va.vol_app_no = #{volAppNo}
+		AND va.use_yn = (SELECT cd FROM common_code WHERE crp_cd = 'A002' AND cd = 'Y')
+		AND v.use_yn = (SELECT cd FROM common_code WHERE crp_cd = 'A002' AND cd = 'Y')
+	</select>
+	
+	
+	<!-- 분류번호: #16 - 봉사 신청 페이지 : 봉사 신청 가능 인원 변경 (고객이 봉사 신청시) -->
+	<update id="updateVolPeople" parameterType="String">
+		UPDATE volunteer v
+			INNER JOIN volunteer_application va 
+			ON v.vol_no = va.vol_no
+		SET v.vol_people = v.vol_people - #{volAppPeople}
+		WHERE v.vol_no = #{volNo}
+		AND v.use_yn = (SELECT cd FROM common_code WHERE crp_cd = 'A002' AND cd = 'Y')
+		AND v.vol_people > 0
+	</update>
+	
+	<!-- 분류번호: #9 - 봉사 신청 상세 페이지 : 봉사 신청 가능 인원 변경 (거절/취소 시) -->
+	<update id="cancelVolPeople" parameterType="map">
+		UPDATE volunteer v
+			INNER JOIN volunteer_application va 
+			ON v.vol_no = va.vol_no
+		SET v.vol_people = v.vol_people + va.vol_app_people
+		WHERE v.vol_no = #{volNo}
+		AND va.vol_app_no = #{volAppNo}
+		AND v.use_yn = (SELECT cd FROM common_code WHERE crp_cd = 'A002' AND cd = 'Y')
+	</update>
+	
+	
+	<!-- 분류번호: #9, 16 - 봉사 신청 상세 페이지 : 봉사 신청 상태 변경 -->
+	<update id="updateVolState" parameterType="String">
+		UPDATE volunteer_application 
+		SET vol_app_state = #{volAppState},
+			mod_id = #{modId},
+			mod_time = NOW()
+		WHERE vol_app_no = #{volAppNo}
+	</update>
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+
+
+</mapper>

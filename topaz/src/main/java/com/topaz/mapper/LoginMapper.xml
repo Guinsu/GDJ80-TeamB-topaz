@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.topaz.mapper.LoginMapper">
+
+	<!-- #1 - 직원 로그인 -->
+	<select id="doEmpLogin" resultType="map">
+		SELECT emp_no empNo, emp_pw empPw, emp_name empName, emp_dept empDept, emp_grade empGrade
+				, DATE(emp_hiredate) empHiredate, DATEDIFF(CURDATE(), DATE(emp_hiredate)) hireDays
+				, file_name fileName, use_yn useYN
+		FROM employee
+		WHERE use_yn = (SELECT cd FROM common_code WHERE crp_cd = 'A002' AND cd = 'Y')
+		AND emp_no = #{strId}
+	</select>
+
+	<!-- #12 - 외주업체 로그인 -->
+	<select id="doOutsourcingLogin" resultType="map">
+		SELECT outsourcing_no outsourcingNo, outsourcing_pw outsourcingPw, outsourcing_name outsourcingName, 
+				outsourcing_state outsourcingState, outsourcing_type outsourcingType
+		FROM outsourcing 
+		WHERE use_yn = (SELECT cd FROM common_code WHERE crp_cd = 'A002' AND cd = 'Y')
+		AND outsourcing_no = #{strId}
+	</select> 
+
+	<!-- #15 - 고객 로그인 -->
+	<select id="doGuestLogin" resultType="map">
+		SELECT gst_id gstId, gst_pw gstPw, gst_name gstName
+		FROM guest
+		WHERE use_yn = (SELECT cd FROM common_code WHERE crp_cd = 'A002' AND cd = 'Y')
+		AND gst_id = #{strId}
+	</select> 
+
+	<!-- 분류 번호 : #3 - 출근 등록 -->
+	<insert id="insertStrWork" >
+		INSERT INTO 
+			commute_history(
+				commute_no,
+				emp_no,
+				start_time,
+				end_time,
+				reg_time,
+				mod_time,
+				reg_id,
+				mod_id,
+				use_yn
+			)VALUES(
+				CURRENT_TIMESTAMP(5),
+				#{empNo},
+				NOW(),
+				CONCAT(DATE(NOW()), ' 00:00:00'),
+				NOW(),
+				NOW(),
+				#{empNo},
+				#{empNo},
+				'Y'
+			)
+	</insert>
+	
+	<!-- 분류 번호 : #3 - 퇴근 등록 -->
+	<update id="updateEndWork" >
+		UPDATE 
+			commute_history
+		SET
+			end_time = NOW()
+		WHERE 
+			emp_no = #{empNo} AND 
+			DATE(start_time) = CURDATE() AND
+			HOUR(end_time) = 0 AND
+	       MINUTE(end_time) = 0 AND
+	       SECOND(end_time) = 0
+	</update>
+	
+	<!-- 분류 번호 :  #3 - 출퇴근 상태 조회 -->
+	<select id="selectWorkState">
+		SELECT 
+			start_time, end_time 
+		FROM
+			commute_history
+		WHERE
+			emp_no = #{empNo} AND 
+			DATE(start_time) = CURDATE()
+	</select>
+		
+</mapper>

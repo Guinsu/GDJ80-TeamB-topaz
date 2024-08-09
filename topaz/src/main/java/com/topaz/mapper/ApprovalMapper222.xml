@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.topaz.mapper.ApprovalMapper222">
+
+	<!-- 분류번호: #11 - 결재 리스트 페이지 -->
+	<select id="selectApprovalList" parameterType="String" resultType="map">
+		SELECT 
+			approval_doc_no approvalDocNo,
+			(SELECT cd_nm FROM common_code WHERE crp_cd = 'S002' AND cd = approval_type) approvalType , 
+			(SELECT cd_nm FROM common_code WHERE crp_cd = 'S001' AND cd = approval_state) approvalState,
+			(SELECT emp_name FROM employee e WHERE e.emp_no = ad.emp_no) empNo, 
+			doc_title docTitle, 
+			DATE_FORMAT(reg_time, '%Y-%m-%d %H:%i') regTime
+		FROM approval_doc ad
+		<where>
+			1=1
+			<if test="searchWord != null and searchWord != ''">
+				AND doc_title LIKE CONCAT('%', #{searchWord},'%')
+			</if>
+			<if test="searchDateStart != null and searchDateStart != ''">
+				AND reg_time >= DATE_FORMAT(#{searchDateStart}, '%Y%m%d')
+			</if>
+			<if test="searchDateEnd != null and searchDateEnd != ''">
+				AND reg_time &lt; DATE_ADD(DATE_FORMAT(#{searchDateEnd}, '%Y%m%d'), INTERVAL +1 DAY)
+			</if>
+			<if test="approvalCategory == null or approvalCategory == ''">
+				AND (emp_no = #{empNo} OR first_approval = #{empNo} OR final_approval = #{empNo})
+			</if>
+			<if test="approvalCategory != null and approvalCategory != ''">
+            <choose>
+                <when test="approvalCategory == 'c1'">
+                    AND emp_no = #{empNo}
+                </when>
+                <when test="approvalCategory == 'c2'">
+                    AND (first_approval = #{empNo} OR final_approval = #{empNo})
+                </when>
+                <when test="approvalCategory == 'c3'">
+                	AND (emp_no = #{empNo} OR first_approval = #{empNo} OR final_approval = #{empNo}) 
+					AND approval_state = '5'
+				</when>
+				<when test="approvalCategory == 'c4'">
+					AND (emp_no = #{empNo} OR first_approval = #{empNo} OR final_approval = #{empNo}) 
+					AND (approval_state = '1' OR approval_state = '2')
+				</when>
+				<when test="approvalCategory == 'c5'">
+					AND ((SELECT emp_dept FROM employee e WHERE e.emp_no = ad.emp_no) = (SELECT emp_dept FROM employee e WHERE e.emp_no = #{empNo})
+						OR (SELECT emp_dept FROM employee e WHERE e.emp_no = ad.first_approval) = (SELECT emp_dept FROM employee e WHERE e.emp_no = #{empNo})
+						OR (SELECT emp_dept FROM employee e WHERE e.emp_no = ad.final_approval) = (SELECT emp_dept FROM employee e WHERE e.emp_no = #{empNo}))
+				</when>
+            </choose>
+        	</if>
+		</where>
+		ORDER BY reg_time DESC
+		LIMIT #{beginRow}, #{rowPerPage}
+	</select>
+	
+	
+	<!-- 분류번호: #11 - 결재 리스트 페이지 : 총 행 수 구하기 -->
+	<select id="selectApprovalListTotalRow" parameterType="String" resultType="int">
+		SELECT COUNT(*) cnt 
+		FROM approval_doc ad 
+		<where>
+			1=1
+			<if test="searchWord != null and searchWord != ''">
+				AND doc_title LIKE CONCAT('%', #{searchWord},'%')
+			</if>
+			<if test="searchDateStart != null and searchDateStart != ''">
+				AND reg_time >= DATE_FORMAT(#{searchDateStart}, '%Y%m%d')
+			</if>
+			<if test="searchDateEnd != null and searchDateEnd != ''">
+				AND reg_time &lt; DATE_ADD(DATE_FORMAT(#{searchDateEnd}, '%Y%m%d'), INTERVAL +1 DAY)
+			</if>
+			<if test="approvalCategory == null or approvalCategory == ''">
+				AND (emp_no = #{empNo} OR first_approval = #{empNo} OR final_approval = #{empNo})
+			</if>
+			<if test="approvalCategory != null and approvalCategory != ''">
+            <choose>
+                <when test="approvalCategory == 'c1'">
+                    AND emp_no = #{empNo}
+                </when>
+                <when test="approvalCategory == 'c2'">
+                    AND (first_approval = #{empNo} OR final_approval = #{empNo})
+                </when>
+                <when test="approvalCategory == 'c3'">
+                	AND (emp_no = #{empNo} OR first_approval = #{empNo} OR final_approval = #{empNo}) 
+					AND approval_state = '5'
+				</when>
+				<when test="approvalCategory == 'c4'">
+					AND (emp_no = #{empNo} OR first_approval = #{empNo} OR final_approval = #{empNo}) 
+					AND (approval_state = '1' OR approval_state = '2')
+				</when>
+				<when test="approvalCategory == 'c5'">
+					AND ((SELECT emp_dept FROM employee e WHERE e.emp_no = ad.emp_no) = (SELECT emp_dept FROM employee e WHERE e.emp_no = #{empNo})
+						OR (SELECT emp_dept FROM employee e WHERE e.emp_no = ad.first_approval) = (SELECT emp_dept FROM employee e WHERE e.emp_no = #{empNo})
+						OR (SELECT emp_dept FROM employee e WHERE e.emp_no = ad.final_approval) = (SELECT emp_dept FROM employee e WHERE e.emp_no = #{empNo}))
+				</when>
+            </choose>
+        	</if>
+		</where>
+	</select>
+	
+	
+
+</mapper>

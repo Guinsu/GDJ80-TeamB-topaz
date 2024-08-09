@@ -1,0 +1,126 @@
+@charset "UTF-8";
+
+/* 일반 태그 */
+form {
+    width: 100%;
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+form button {
+    padding: 10px 15px;
+    background-color: #007bff;
+    color: #ffffff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    margin-top: 10px;
+    width: auto; 
+}
+
+form button:hover {
+    background-color: #0056b3;
+}
+
+button[type="button"]:not(.resetBtn) {
+    background-color: #007bff;
+    color: #ffffff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    margin-top: 10px;
+    width: auto; 
+}
+
+button[type="button"]:not(.resetBtn):hover {
+    background-color: #0056b3;
+}
+
+table tr:hover {
+    background-color: #d3eafc; 
+    cursor: pointer; 
+}
+
+.btnDiv {
+    display: flex;
+    justify-content: center;
+    gap: 10px; 
+}
+
+.btnDiv button{
+    padding: 10px 15px;
+    background-color: #007bff;
+    color: #ffffff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    margin-top: 10px;
+    width: auto; 
+}
+.noteDetailContainer {
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    padding: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin: 0 auto;
+    width: 90%;
+    height: 300px;
+}
+
+.noteHeader {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    font-weight: bold;
+    color: #333;
+	border-bottom: 3px solid black;
+}
+
+.noteContent{
+	margin-top: 20px;
+}
+
+.dept-item {
+    margin-bottom: 10px;
+    width: 30%;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+
+.dept-name {
+    background-color: #f8f9fa;
+    padding: 10px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.dept-name:hover {
+    background-color: #e9ecef;
+}
+
+.dept-name span {
+    margin-right: 10px;
+}
+
+.emp-list {
+    padding: 10px;
+}
+
+.emp-list div {
+    margin-bottom: 5px;
+}
+
+.deptCheckbox {
+    margin-right: 10px;
+}
+
+#paginationUl {
+    display: flex;
+    justify-content: center;    
+}

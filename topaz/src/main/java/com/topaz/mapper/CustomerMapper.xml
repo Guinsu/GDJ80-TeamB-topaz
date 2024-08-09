@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.topaz.mapper.CustomerMapper">
+
+	<!-- 분류 번호: #16 - 회원가입  -->
+	<insert id="signUp" parameterType="com.topaz.dto.Guest">
+		INSERT INTO guest (
+			gst_id, 
+			gst_pw, 
+			gst_name, 
+			gst_email, 
+			gst_gender, 
+			gst_birth, 
+			gst_phone, 
+			gst_type, 
+			post_no, 
+			address, 
+			reg_time, 
+			mod_time, 
+			reg_id, 
+			mod_id, 
+			use_yn
+		)
+		VALUES(
+			#{gstId}, 
+			SHA2(#{gstPw}, 256), 
+			#{gstName}, 
+			#{gstEmail}, 
+			#{gstGender}, 
+			#{gstBirth}, 
+			#{gstPhone}, 
+			(SELECT cd FROM common_code WHERE crp_cd = 'A003' AND cd = 'C'),
+			#{postNo}, 
+			#{address}, 
+			NOW(), 
+			NOW(), 
+			#{gstId}, 
+			#{gstId},
+			(SELECT cd FROM common_code WHERE crp_cd = 'A002' AND cd = 'Y')
+		)
+	</insert>
+	
+	<!-- 분류 번호: #16 - 회원가입 : ID 중복 확인  -->
+	<select id="selectGuestId" parameterType="String" resultType="String">
+		SELECT gst_id gstId
+		FROM guest
+		WHERE gst_id = #{gstId}
+	</select>
+	
+	<!-- 분류 번호: #16 - 내 정보 -->
+	<select id="selectGstOne" resultType="map">
+		SELECT 	
+			gst_id gstId, 
+			gst_pw gstPw, 
+			gst_name gstName, 
+			gst_email gstEmail, 
+			(SELECT cd_nm FROM common_code WHERE crp_cd = 'A001' AND cd = gst_gender) gstGender,
+			gst_birth gstBirth, 
+			gst_phone gstPhone,
+			(SELECT cd_nm FROM common_code WHERE crp_cd = 'A003' AND cd = gst_type) gstType, 
+			post_no postNo, 
+			address,
+			DATE_FORMAT(g.contract_start, '%Y-%m-%d') contractStart, 
+			DATE_FORMAT(g.contract_end, '%Y-%m-%d') contractEnd,
+			g.room_no roomNo, 
+			room_amenity roomAmenity,
+			resident_note residentNote, 
+			protector_name protectorName, 
+			protector_phone protectorPhone, 
+			protector_relation protectorRelation,
+			(SELECT cd_nm FROM common_code WHERE crp_cd = 'C004' AND cd = r.room_type) roomType, 
+			r.room_dong roomDong, 
+			r.room_ho roomHo
+		FROM guest g
+			LEFT JOIN room r 
+			ON g.room_no = r.room_no 
+		WHERE g.gst_id = #{gstId}
+	</select>
+	
+	<!-- 분류 번호: #16 - 회원탈퇴 : 사용여부(Y -> N) -->
+	<update id="deleteGst" parameterType="com.topaz.dto.Guest">
+		UPDATE guest 
+		SET 
+			use_yn = (SELECT cd FROM common_code WHERE crp_cd = 'A002' AND cd = 'N'),
+			mod_time = NOW(),
+			mod_id = #{modId}
+		WHERE gst_id = #{gstId}
+	</update> 
+	
+	<!-- 분류 번호: #16 - 회원 내 정보 수정 -->
+	<update id="modifyGst" parameterType="com.topaz.dto.Guest">
+		UPDATE guest
+		SET
+			gst_name = #{gstName},
+			gst_phone = #{gstPhone},
+			post_no = #{postNo},
+			address = #{address},
+			mod_id = #{modId},
+			mod_time = NOW()
+		WHERE gst_id = #{gstId}
+	</update>
+	
+	<!-- 분류 번호: #16 - 회원 내 봉사 신청 보기 -->
+	<select id="selectMyVolApp" parameterType="String" resultType="map">
+		SELECT 
+			v.vol_content volContent,
+			v.vol_people volPeople,
+			DATE_FORMAT(v.vol_starttime, '%Y-%m-%d %H:%i') volStartTime, 
+			DATE_FORMAT(v.vol_endtime, '%Y-%m-%d %H:%i') volEndTime, 
+			va.vol_app_no volAppNo, 
+			va.vol_no volNo,
+			va.gst_id gstId, 
+			va.vol_app_people volAppPeople, 
+			va.vol_app_comment volAppComment, 
+			(SELECT cd_nm FROM common_code WHERE crp_cd = 'W003' AND cd = va.vol_app_state) volAppState
+		FROM volunteer_application va 
+			INNER JOIN volunteer v 
+			ON va.vol_no = v.vol_no 
+		WHERE va.gst_id = #{gstId}
+		AND va.use_yn = (SELECT cd FROM common_code WHERE crp_cd = 'A002' AND cd = 'Y')
+		AND v.use_yn = (SELECT cd FROM common_code WHERE crp_cd = 'A002' AND cd = 'Y')
+		ORDER BY va.reg_time DESC
+	</select>
+
+	<!-- 분류 번호: #16 - 비밀번호 수정 : 기존 비밀번호 수정 -->
+	<update id="updateGstPw" parameterType="String">
+		UPDATE guest 
+		SET 
+			gst_pw = SHA2(#{newPw}, 256),
+			mod_time = NOW(),
+			mod_id = #{gstId}
+		WHERE gst_id = #{gstId}
+		AND gst_pw = SHA2(#{oldPw}, 256)
+	</update>
+
+	<!-- 분류 번호: #16 - 비밀번호 수정 : 이전 비밀번호 기록 저장 -->
+	<insert id="insertGstPw" parameterType="String">
+		INSERT INTO old_pw_history 
+			(old_pw_no,
+			user_no,
+			user_part,
+			old_pw,
+			reg_id,
+			reg_time,
+			mod_id,
+			mod_time,
+			use_yn)
+		VALUES 
+			(CURRENT_TIMESTAMP(5),
+			#{gstId},
+			'GST',
+			SHA2(#{oldPw}, 256),
+			#{gstId},
+			NOW(),
+			#{gstId},
+			NOW(),
+			'N')
+	</insert>
+
+	<!-- 분류 번호: #16 - 비밀번호 찾기 : 가입 이름 확인(본인 확인)  -->
+	<select id="selectGstName" parameterType="String" resultType="String">
+		SELECT gst_name gstName
+		FROM guest
+		WHERE gst_name = #{gstName}
+		AND gst_id = #{gstId}
+	</select>
+	
+	<!-- 분류 번호: #16 - 비밀번호 찾기 : 이전 비밀번호 기록 저장 -->
+	<insert id="insertGstFindPw" parameterType="String">
+		INSERT INTO old_pw_history 
+			(old_pw_no,
+			user_no,
+			user_part,
+			old_pw,
+			reg_id,
+			reg_time,
+			mod_id,
+			mod_time,
+			use_yn)
+		VALUES 
+			(CURRENT_TIMESTAMP(5),
+			#{gstId},
+			'GST',
+			(SELECT gst_pw FROM guest WHERE gst_id = #{gstId}),
+			#{gstId},
+			NOW(),
+			#{gstId},
+			NOW(),
+			'N')
+	</insert>
+	
+	<!-- 분류 번호: #16 - 비밀번호 찾기 : 기존 비밀번호 수정 -->
+	<update id="updateGstFindPw" parameterType="String">
+		UPDATE guest 
+		SET 
+			gst_pw = SHA2(#{newPw}, 256),
+			mod_time = NOW(),
+			mod_id = #{gstId}
+		WHERE gst_id = #{gstId}
+	</update>
+	
+</mapper>

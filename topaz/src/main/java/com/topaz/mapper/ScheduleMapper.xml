@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.topaz.mapper.ScheduleMapper">
+
+	<!-- 분류 번호: #6 - 사내 일정 관리 페이지 :: 전체조회 -->
+	<select id="selectScheduleList" resultType="map">
+		SELECT 
+			schedule_no scheduleNo
+			, title
+			, content
+			, (SELECT cd_nm FROM common_code WHERE crp_cd = 'M001' AND cd = type) type
+			, DATE_FORMAT(start_date, '%Y-%m-%dT%H:%i:%s') startDate
+			, DATE_FORMAT(end_date, '%Y-%m-%dT%H:%i:%s') endDate
+		FROM schedules
+		WHERE use_yn = (SELECT cd FROM common_code WHERE crp_cd = 'A002' AND cd = 'Y')
+		AND (SELECT cd_nm FROM common_code WHERE crp_cd = 'M001' AND cd = TYPE) LIKE CONCAT('%',#{inputState},'%')
+	</select>
+	
+	<!-- 분류 번호: #6 - 사내 일정 관리 페이지 :: 오늘의 일정조회 -->
+	<select id="selectScheduleTodayList" resultType="map">
+		SELECT 
+			s.schedule_no scheduleNo
+			, s.title title
+			, s.content content
+			, (SELECT cd_nm FROM common_code WHERE crp_cd = 'M001' AND cd = s.type) type
+			, DATE_FORMAT(s.start_date, '%H:%i') startTime
+			, DATE_FORMAT(s.end_date, '%H:%i') endTime
+		FROM schedules s
+		WHERE (CURDATE() BETWEEN DATE(s.start_date) AND DATE(s.end_date) 
+				OR (CURDATE() = DATE(s.start_date) AND CURDATE() = DATE(s.end_date)))
+		AND s.use_yn 
+				= (SELECT cd FROM common_code WHERE crp_cd = 'A002' AND cd = 'Y')
+		ORDER BY startTime
+	</select>
+	
+	<!-- 분류 번호: #6 - 사내 일정 관리 페이지 :: 사내일정 등록 -->
+	<insert id="insertSchedule" parameterType="com.topaz.dto.Schedule">
+		INSERT INTO schedules(
+			schedule_no
+			, title
+			, type
+			, content
+			, start_date
+			, end_date
+			, reg_id
+			, reg_time
+			, mod_id
+			, mod_time
+			, use_yn
+		)VALUES(
+			CURRENT_TIMESTAMP(5)
+			, #{title}
+			, #{type}
+			, #{content}
+			, #{startDate}
+			, #{endDate}
+			, #{regId}
+			, NOW()
+			, #{modId}
+			, NOW()
+			, 'Y'
+		);
+	</insert>
+	
+	<!-- 분류 번호: #6 - 사내 일정 상세보기 페이지 :: 상세조회 -->
+	<select id="selectScheduleOne" parameterType="String" resultType="com.topaz.dto.Schedule">
+		SELECT 
+			s.schedule_no scheduleNo
+			, s.title title
+			, (SELECT cd_nm FROM common_code WHERE crp_cd = 'M001' AND cd = type) type
+			, s.content content
+			, DATE_FORMAT(s.start_date, '%Y-%m-%dT%H:%i:%s') startDate
+			, DATE_FORMAT(s.end_date, '%Y-%m-%dT%H:%i:%s') endDate
+			, (SELECT emp_name FROM employee WHERE emp_no = s.reg_id) regId
+			, (SELECT emp_name FROM employee WHERE emp_no = s.mod_id) modId
+		FROM schedules s
+		WHERE s.use_yn = (SELECT cd FROM common_code WHERE crp_cd = 'A002' AND cd = 'Y')
+		AND s.schedule_no = #{scheduleNo}
+	</select>
+	
+	
+	<!-- 분류 번호: #6 - 사내 일정 상세보기 페이지 :: 수정 -->
+	<update id="updateSchedule" parameterType="com.topaz.dto.Schedule">
+		UPDATE 
+			schedules
+		SET
+			title = #{title}
+			, type = #{type}
+			, content = #{content}
+			, start_date = #{startDate}
+			, end_date = #{endDate}
+			, mod_id = #{modId}
+			, mod_time = NOW()
+		WHERE 
+			schedule_no = #{scheduleNo}
+	</update>
+	
+	
+	<!-- 분류 번호: #6 - 사내 일정 상세보기 페이지 :: 삭제(사용여부 Y -> N) -->
+	<update id="deleteSchedule" parameterType="com.topaz.dto.Schedule">
+		UPDATE 
+			schedules 
+		SET 
+			use_yn = 'N'
+			, mod_id = #{modId}
+		WHERE
+			schedule_no = #{scheduleNo}
+	</update>
+	
+	<!-- 분류 번호: #6 - 사내 일정 관리 페이지 :: 차트 통계 -->
+	<select id="getScheduleChart" resultType="map">
+		SELECT
+		    YEAR(start_date) AS year,
+		    MONTH(start_date) AS month,
+		    type,
+		    COUNT(*) AS eventCount
+		FROM
+		    schedules
+		WHERE
+		    YEAR(start_date) = YEAR(CURDATE()) 
+		AND
+		    MONTH(start_date) = MONTH(CURDATE())
+		GROUP BY
+		    YEAR(start_date),
+		    MONTH(start_date),
+		    type
+	</select>
+	
+	
+</mapper>

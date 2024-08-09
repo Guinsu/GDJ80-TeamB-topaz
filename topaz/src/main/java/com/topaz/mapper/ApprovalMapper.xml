@@ -1,0 +1,302 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.topaz.mapper.ApprovalMapper">
+
+	<!-- 분류 번호: #11 - 전자결재 신청 페이지 :: 서명 등록 -->
+	<update id="insertApprovalSign" parameterType="com.topaz.dto.Employee">
+		UPDATE
+			employee
+		SET
+			  sign_file = #{signFile}
+			, mod_id = #{modId}
+			, mod_time = NOW()
+		WHERE
+			emp_no = #{empNo}
+	</update>
+	
+	
+	<!-- 분류 번호: #11 - 전자결재 신청 페이지 :: 서명 파일 등록 -->
+	<insert id="insertApprovalSignFile" parameterType="com.topaz.dto.UploadFile">
+		INSERT INTO file_upload(
+			  file_no
+			, reference_no
+			, original_file_name
+			, file_name
+			, file_size
+			, file_type
+			, reg_id
+			, reg_time
+			, mod_id
+			, mod_time
+			, use_yn
+		)VALUES(
+			  #{fileNo}
+			, #{referenceNo}
+			, #{OriginalFileName}
+			, #{fileName}
+			, #{fileSize}
+			, #{fileType}
+			, #{regId}
+			, NOW()
+			, #{modId}
+			, NOW()
+			, #{useYN}
+		)
+	</insert>
+	
+	
+	<!-- 분류 번호: #11 - 전자결재 신청 페이지 :: 서명 파일 및 기안 개수 조회 -->
+	<select id="selectEmpSign" parameterType="String" resultType="map">
+		SELECT 
+			  e.emp_no empNo
+			, e.emp_name empName
+			, e.emp_grade empGrade
+			, (SELECT cd_nm FROM common_code WHERE crp_cd = 'E001' AND cd = e.emp_dept) empDeptName
+			, (SELECT cd_nm FROM common_code WHERE crp_cd = 'E002' AND cd = e.emp_grade) empGradeName
+			, e.sign_file signFile
+			, (select COUNT(*) FROM approval_doc WHERE emp_no= #{empNo}) cntTotal
+			, (select COUNT(*) FROM approval_doc WHERE approval_type = '1' AND emp_no= #{empNo}) cntDayoff
+			, (select COUNT(*) FROM approval_doc WHERE approval_type = '2' AND emp_no= #{empNo}) cntEvent
+			, (select COUNT(*) FROM approval_doc WHERE approval_type = '3' AND emp_no= #{empNo}) cntExpense
+		FROM 
+			employee e 
+		LEFT JOIN file_upload f 
+			ON e.sign_file = f.file_no
+		WHERE 
+			e.emp_no = #{empNo}
+	</select>
+	
+	
+	<!-- 분류 번호: #11 - 전자결재 신청 페이지 :: 서명 파일 수정 -->
+	<update id="updateApprovalSign" parameterType="String">
+		UPDATE 
+			employee e, file_upload f
+		SET 
+			  e.mod_time = NOW()
+			, f.mod_time = NOW()
+		WHERE 
+			e.sign_file = f.file_no
+		AND 
+			e.emp_no = #{empNO}
+	</update>
+	
+	
+	<!-- 분류 번호: #11 - 전자결재 신청 페이지 :: 첫번째 결재자 리스트 조회 -->
+	<select id="selectFirstApproval" parameterType="String" resultType="map">
+		SELECT 
+			e.emp_no empNo
+			,e.emp_name empName
+			, e.emp_dept empDept
+			,(SELECT cd_nm FROM common_code WHERE crp_cd = 'E001' AND cd = e.emp_dept) empDeptName
+			, e.emp_grade empGrade
+			, (SELECT cd_nm FROM common_code WHERE crp_cd = 'E002' AND cd = e.emp_grade) empGradeName
+		FROM 
+			employee e
+		WHERE 
+			e.emp_grade > 1
+		AND 
+			e.emp_dept = #{approvalType}
+		ORDER BY e.emp_grade DESC
+	</select>
+	
+	
+	<!-- 분류 번호: #11 - 전자결재 신청 페이지 :: 부서 카테고리 리스트 조회 -->
+	<select id="selectDeptList" resultType="map">
+		SELECT 
+			  cd departmentCode
+			, cd_nm departmentName
+		FROM 
+			common_code
+		WHERE 
+			crp_cd = 'E001'
+	</select>
+	
+	
+	<!-- 분류 번호: #11 - 전자결재 신청 페이지 :: 부서 카테고리 리스트 조회 -->
+	<insert id="insertApprovalDoc" parameterType="com.topaz.dto.ApprovalDoc">
+		INSERT INTO approval_doc(
+			  approval_doc_no
+			, approval_type
+			, emp_no
+			, approval_state
+			, doc_title
+			, first_approval
+			, final_approval
+			, doc_first_content
+			, doc_second_content
+			, doc_third_content
+			, start_date
+			, end_date
+			, reg_id
+			, reg_time
+			, mod_id
+			, mod_time
+			, use_yn
+		)VALUES(
+		  	  CURRENT_TIMESTAMP(5)
+			, #{approvalType}
+			, #{empNo}
+			, #{approvalState}
+			, #{docTitle}
+			, #{firstApproval}
+			, #{finalApproval}
+			, #{docFirstContent}
+			, #{docSecondContent}
+			, #{docThirdContent}
+			, #{startDate}
+			, #{endDate}
+			, #{regId}
+			, NOW()
+			, #{modId}
+			, NOW()
+			, #{useYn}
+		)
+		<!-- 등록된 pk값 저장 -->
+		<selectKey keyProperty="approvalDocNo" resultType="String" order="AFTER">
+	        SELECT CAST(MAX(approval_doc_no) AS CHAR) 
+	        FROM approval_doc 
+	        WHERE reg_id=#{regId}
+	        ORDER BY reg_time DESC LIMIT 1
+		</selectKey>
+	</insert>
+	
+	
+	<!-- 분류 번호: #11 - 전자결재 신청 페이지 :: 결재 문서 파일 등록 -->
+	<insert id="insertApprovalFile" parameterType="com.topaz.dto.UploadFile">
+		INSERT INTO file_upload(
+			file_no, reference_no, original_file_name
+			, file_name, file_size, file_type
+			, reg_id, reg_time, mod_id, mod_time, use_yn
+		)VALUES(
+			#{fileNo}, #{referenceNo}, #{OriginalFileName}
+			, #{fileName}, #{fileSize}, #{fileType}
+			, #{regId}, NOW(), #{modId}, NOW(), #{useYN} 
+		)
+	</insert>
+	
+	
+	<!-- 분류 번호: #11 - 전자결재 상세 페이지 :: 결재 문서 상세 조회 -->
+	<select id="selectApprovalDocOne" parameterType="String" resultType="map">
+		SELECT 
+			<!-- 신청자 아이디 -->
+			  e1.emp_no empNo		
+			<!-- 신청자 이름 -->
+			, e1.emp_name empName	
+			<!-- 신청자 부서 -->
+			, (SELECT cd_nm FROM common_code WHERE crp_cd = 'E001' AND cd = e1.emp_dept) empDept
+			<!-- 신청자 직위 -->
+			, (SELECT cd_nm FROM common_code WHERE crp_cd = 'E002' AND cd = e1.emp_grade) empGrade
+			<!-- 신청자 서명파일 -->
+			, e1.sign_file signFile	
+			
+			<!-- 결재문서 번호 -->
+			, ad.approval_doc_no approvalDocNo
+			<!-- 결재문서 타입 -->
+			, (SELECT cd_nm FROM common_code WHERE crp_cd = 'S002' AND cd = ad.approval_type) approvalType
+			<!-- 결재문서 상태 이름 -->
+			, (SELECT cd_nm FROM common_code WHERE crp_cd = 'S001' AND cd = ad.approval_state) approvalStateName
+			<!-- 결재문서 상태 코드 -->
+			, ad.approval_state approvalState
+			, ad.doc_title docTitle					<!-- 결재문서 제목 -->
+			, ad.doc_first_content docFirstContent	<!-- 결재문서 내용1 -->
+			, ad.doc_second_content docSecondContent<!-- 결재문서 내용2 -->
+			, ad.doc_third_content docThirdContent	<!-- 결재문서 내용3 -->
+			, ad.approval_reason approvalReason		<!-- 결재문서 반려사유 -->
+			, DATE(ad.start_date) startDate			<!-- 결재문서 신청날짜 -->
+			, DATE(ad.end_date) endDate				<!-- 결재문서 종료날짜 -->
+			, DATE(ad.reg_time) regTime				<!-- 결재문서 등록날짜 -->
+			, DATEDIFF(ad.end_date, ad.start_date) dayOffDays <!-- 휴가신청일 -->
+			, fu.file_name fileName					<!-- 결재문서 파일첨부 -->
+			, fu.original_file_name originalFileName<!-- 결재문서 파일첨부 오리지널네임 -->
+			
+			<!-- 중간승인자 아이디 -->
+			, e2.emp_no firstApproval
+			<!-- 중간승인자 이름 --> 
+			, e2.emp_name firstApprovalName
+			<!-- 중간승인자 부서 -->
+			, (SELECT cd_nm FROM common_code WHERE crp_cd = 'E001' AND cd = e2.emp_dept) firstApprovalDeptName
+			<!-- 중간승인자 직위 -->
+			, (SELECT cd_nm FROM common_code WHERE crp_cd = 'E002' AND cd = e2.emp_grade) firstApprovalGradeName
+			<!-- 중간승인자 서명파일 -->	
+			, e2.sign_file firstApprovalSign
+			<!-- 중간승인자 결재날짜 -->
+			, DATE(ad.first_approval_date) firstApprovalDate
+			
+			<!-- 최종승인자 아이디 -->
+			, e3.emp_no finalApproval
+			<!-- 최종승인자 이름  -->
+			, e3.emp_name finalApprovalName
+			<!-- 최종승인자 부서 -->
+			, (SELECT cd_nm FROM common_code WHERE crp_cd = 'E001' AND cd = e3.emp_dept) finalApprovalDeptName
+			<!-- 최종승인자 직위 -->
+			, (SELECT cd_nm FROM common_code WHERE crp_cd = 'E002' AND cd = e3.emp_grade) finalApprovalGradeName
+			<!-- 최종승인자 서명파일 -->
+			, e3.sign_file finalApprovalSign
+			<!-- 최종승인자 결재날짜 -->
+			, DATE(ad.final_approval_date) finalApprovalDate
+		FROM 
+			approval_doc ad <!-- 결재문서 ad -->
+		INNER JOIN employee e1
+			ON ad.emp_no = e1.emp_no <!-- 신청자 e1 -->
+		INNER JOIN employee e2
+			ON e2.emp_no = ad.first_approval <!-- 중간 승인자 e2  -->
+		INNER JOIN employee e3
+			ON e3.emp_no = ad.final_approval <!-- 최종 승인자 e3  -->
+		LEFT JOIN file_upload fu 
+			ON ad.approval_doc_no = fu.reference_no <!-- 첨부된 파일 fu -->
+		WHERE 
+			ad.approval_doc_no = #{approvalDocNo}
+	</select>
+	
+	<!-- 분류 번호: #11 - 전자결재 상세 페이지 :: 결재 문서 상태 수정  -->
+	<update id="updateApprovalState" parameterType="com.topaz.dto.ApprovalDocModify">
+		UPDATE 
+			approval_doc
+		SET
+			approval_state = #{approvalNewState},
+			<if test="approvalReason != null and approvalReason != ''">
+				approval_reason = #{approvalReason},
+			</if>
+			<if test="firstApproval != null and firstApproval != ''">
+				first_approval_date = NOW(),
+			</if>
+			<if test="finalApproval != null and finalApproval != ''">
+				final_approval_date = NOW(),
+			</if>
+			mod_id = #{modId},
+			mod_time = NOW()
+		WHERE
+			approval_doc_no = #{approvalDocNo}
+		
+	</update>
+	
+	
+	<!-- 분류 번호: #11 - 전자결재 상세 페이지 :: 휴가신청서 '승인'상태 시 등록 -->
+	<insert id="insertLeaveHistory" parameterType="com.topaz.dto.LeaveHistory">
+		INSERT INTO leave_history(
+			  leave_history_no
+			, emp_no
+			, leave_type
+			, leave_count
+			, start_time
+			, end_time
+			, reg_id
+			, regi_time
+			, mod_id
+			, mod_time
+			, use_yn
+		)VALUES(
+			  #{leaveHistoryNo}
+			, #{empNo}
+			, #{leaveType}
+			, #{leaveCount}
+			, #{startTime}
+			, #{endTime}
+			, #{regId}
+			, NOW()
+			, #{modId}
+			, NOW()
+			, #{useYn}
+		)
+	</insert>
+</mapper>

@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.topaz.mapper.GuestMapper">
+	
+	<!-- 분류번호: #7 - 입주자 관리 페이지 : 전체 입주자 조회 -->
+    <!-- 검색필터에 따른 입주자 조회 -->
+    <select id="filterResidentList" resultType="map">
+        SELECT 
+        	g.gst_id gstId,
+        	g.gst_name gstName, 
+        	r.room_dong dong, 
+        	r.room_type type,
+        	r.room_ho ho
+        FROM 
+        	guest g
+        INNER JOIN 
+        	room r 
+        ON 
+        	g.room_no = r.room_no
+        WHERE 
+        	g.room_no IS NOT NULL
+        AND
+        	g.use_yn = 'Y'
+        AND 
+        	g.gst_type = 'R'
+        	
+        <if test="dong != null and dong != ''">
+            AND r.room_dong = #{dong}
+        </if>
+        <if test="type != null and type != ''">
+            AND r.room_type = #{type}
+        </if>
+        <if test="ho != null and ho != ''">
+            AND r.room_ho = #{ho}
+        </if>
+        <if test="searchWord != null">
+			AND (g.gst_name LIKE CONCAT('%', #{searchWord}, '%') OR #{searchWord} IS NULL)
+		</if>
+        LIMIT #{beginRow}, #{rowPerPage}
+    </select>
+    
+    <!-- 분류번호: #7 - 입주자 관리 페이지 : 전체 입주자 조회 -->
+	<select id="countResidents" resultType="int">
+		SELECT 
+		    count(*) 
+		FROM 
+		    guest g
+		INNER JOIN 
+		    room r 
+		ON 
+		    g.room_no = r.room_no
+		WHERE 
+		    g.room_no IS NOT NULL
+	    AND 
+	    	g.use_yn = 'Y'
+	    AND 
+	    	g.gst_type = 'R'
+		<if test="dong != null and dong != ''">
+		    AND r.room_dong = #{dong}
+		</if>
+		<if test="type != null and type != ''">
+		    AND r.room_type = #{type}
+		</if>
+		<if test="ho != null and ho != ''">
+		    AND r.room_ho = #{ho}
+		</if>
+		<if test="searchWord != null">
+			AND (g.gst_name LIKE CONCAT('%', #{searchWord}, '%') OR #{searchWord} IS NULL)
+		</if>
+	</select>
+    
+    <!-- 분류번호: #7 - 입주자 관리 페이지 : 입주자 상세 조회 -->
+    <select id="selectResidentOne" parameterType="String" resultType="map">
+    	SELECT 
+	    	g.gst_id gstId, 
+	    	g.gst_name gstName, 
+	    	g.gst_email gstEmail, 
+	    	g.gst_gender gstGender, 
+	    	g.gst_birth gstBirth, 
+	    	g.use_yn useYn,
+			g.gst_phone gstPhone, 
+			DATE_FORMAT(g.contract_start, '%Y-%m-%d') contractStart, 
+			DATE_FORMAT(g.contract_end, '%Y-%m-%d') contractEnd, 
+			g.room_amenity roomAmenity, 
+			g.resident_note residentNote, 
+			g.protector_name protectorName, 
+			g.gst_type gstType,
+			g.protector_phone protectorPhone, 
+			g.protector_relation protectorRelation, 
+			(SELECT emp_name FROM employee WHERE emp_no = g.reg_id) regId, 
+			(SELECT emp_name FROM employee WHERE emp_no = g.mod_id) modId, 
+			r.room_no roomNo, 
+			r.room_type roomType, 
+			r.room_dong roomDong, 
+			r.room_ho roomHo,
+			f.file_no fileNo,
+			f.file_name fileName
+		FROM 
+			guest g
+		INNER JOIN 
+			room r
+		ON 
+			g.room_no = r.room_no
+		LEFT JOIN 
+			file_upload f 
+		ON 
+			g.gst_id = f.reference_no
+		WHERE 
+			g.gst_id = #{gstId}
+		AND 
+			g.use_yn = 'Y'
+		AND 
+			g.gst_type = 'R'
+    </select>
+    
+    <!-- 분류번호: #7 - 입주자 관리 페이지 : 입주자 수정 -->
+    <update id="updateResident" parameterType="com.topaz.dto.Guest">
+    	UPDATE guest
+	    <set>
+            gst_phone = #{gstPhone},
+            gst_email = #{gstEmail},
+            room_amenity = #{roomAmenity},
+            resident_note = #{residentNote},
+            contract_end = #{contractEnd},
+			<if test="protectorName != null and protectorName != ''">
+	        	protector_name = #{protectorName},
+	        </if>
+	        <if test="protectorPhone != null and protectorPhone != ''">
+	        protector_phone = #{protectorPhone},
+	        </if>
+	        <if test="protectorRelation != null and protectorRelation != ''">
+	        protector_relation = #{protectorRelation},
+	        </if>
+	        mod_time = NOW(),
+	        mod_id = #{modId}
+	    </set>
+	    WHERE 
+	        gst_id = #{gstId} 
+	    AND 
+	        use_yn = 'Y'
+	    AND 
+	    	gst_type = 'R'
+    </update>
+    
+    <!-- 분류번호: #7 - 입주자 관리 페이지 : 입주자 등록 -->
+    <select id="selectResidentByGuest" resultType = "map">
+    	SELECT 
+    		gst_id gstId,
+    		gst_name gstName,
+    		gst_email gstEmail,
+    		gst_phone gstPhone,
+    		gst_gender gstGender,
+    		gst_birth gstBirth
+    	FROM 
+    		guest 
+    	WHERE gst_type = 'C'
+    	AND 
+    		use_yn = 'Y'
+    </select>
+    
+    <!-- 분류번호: #7 - 입주자 관리 페이지 : 입주자 등록 -->
+    <update id="insertResident" parameterType="com.topaz.dto.Guest">
+    	UPDATE guest
+	    <set>
+            gst_phone = #{gstPhone},
+            gst_email = #{gstEmail},
+            resident_note = #{residentNote},
+            contract_start = #{contractStart},
+            contract_end = #{contractEnd},
+            room_no = #{roomNo},
+	        gst_type = 'R',
+			room_amenity = #{roomAmenity},
+	        <if test="protectorName != null and protectorName != ''">
+	        protector_name = #{protectorName},
+			</if>
+			<if test="protectorPhone != null and protectorPhone != ''">
+			protector_phone = #{protectorPhone},
+			</if>
+			<if test="protectorRelation != null and protectorRelation != ''">
+			protector_relation = #{protectorRelation},
+			</if>
+	        mod_time = NOW(),
+	        mod_id = #{modId}
+	    </set>
+	    WHERE 
+	        gst_id = #{gstId} 
+	    AND 
+	        use_yn = 'Y'
+	    AND 
+	    	gst_type = 'C'
+    </update>
+    
+    <!-- 분류 번호: #7 - 입주자 관리 페이지 : 입주자 파일등록 -->
+	<insert id="insertResidentFile" parameterType="com.topaz.dto.UploadFile">
+		INSERT INTO file_upload(
+			file_no, reference_no, original_file_name
+			, file_name, file_size, file_type
+			, reg_time, mod_time, reg_id, mod_id, use_yn
+		)VALUES(
+			CURRENT_TIMESTAMP(5), #{referenceNo}, #{OriginalFileName}
+			, #{fileName}, #{fileSize}, #{fileType}
+			, NOW(), NOW(), #{regId}, #{modId}, #{useYN}
+		)
+	</insert>
+	
+    <!-- 분류 번호: #7 - 입주자 관리 페이지 : 입주자 파일 수정 -->
+    <update id="updateResidentFile" parameterType="com.topaz.dto.UploadFile">
+		UPDATE 
+			file_upload
+		SET 
+			original_file_name = #{OriginalFileName}
+			, file_name = #{fileName}
+			, file_size = #{fileSize}
+			, file_type = #{fileType}
+			, mod_id = #{modId}
+			, mod_time = NOW()
+		
+		WHERE 
+			reference_no = #{referenceNo}
+	</update>
+</mapper>
