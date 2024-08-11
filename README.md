@@ -8,7 +8,8 @@
 - **프로젝트 참여자**: 김인수, 박혜아, 한은혜, 박수지 
 
 ## 2. 기술 스택
-- **프론트엔드**: HTML, CSS (JSP 사용)
+- **프론트엔드**
+  [![stackticon](https://firebasestorage.googleapis.com/v0/b/stackticon-81399.appspot.com/o/images%2F1723376427581?alt=media&token=ea5d6aa8-77ff-40e5-94c0-f1dcbf30c918)](https://github.com/msdio/stackticon)
 - **백엔드**: Java 
 - **데이터베이스**: MariaDB
 - **기타 도구**: Git, Apache Tomcat, JDBC
