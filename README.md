@@ -8,11 +8,7 @@
 - **프로젝트 참여자**: 김인수, 박혜아, 한은혜, 박수지 
 
 ## 2. 기술 스택
-- **프론트엔드**
-<img src="https://firebasestorage.googleapis.com/v0/b/stackticon-81399.appspot.com/o/images%2F1723376427581?alt=media&token=ea5d6aa8-77ff-40e5-94c0-f1dcbf30c918" alt="stackticon" style="width:600px" />
-- **백엔드**: Java 
-- **데이터베이스**: MariaDB
-- **기타 도구**: Git, Apache Tomcat, JDBC
+<img src="https://firebasestorage.googleapis.com/v0/b/stackticon-81399.appspot.com/o/images%2F1723378055982?alt=media&token=db9b639f-7767-4250-8a55-de6a66a303a7" alt="stackticon" style="width:600px" />
 
 ## 3. 프로젝트 문서
 - [요구사항 명세서](https://github.com/Guinsu/GDJ80-TeamB-topaz/blob/main/topaz/src/main/resources/static/document/%EC%9A%94%EA%B5%AC%EC%82%AC%ED%95%AD%EB%AA%85%EC%84%B8%EC%84%9C.jpg): 시스템 요구 기능 및 제약 조건을 기술한 문서
