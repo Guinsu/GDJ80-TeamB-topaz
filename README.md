@@ -14,11 +14,10 @@
 - **기타 도구**: Git, Apache Tomcat, JDBC
 
 ## 3. 프로젝트 문서
-프로젝트의 세부 사항은 다음 문서들을 참조하세요:
-- [요구사항 명세서]([path_to_requirements_document](https://github.com/Guinsu/GDJ80-TeamB-topaz/blob/main/topaz/src/main/resources/static/document/%EC%9A%94%EA%B5%AC%EC%82%AC%ED%95%AD%EB%AA%85%EC%84%B8%EC%84%9C.jpg)): 사용자가 시스템에서 필요로 하는 모든 기능과 제약 조건을 상세히 기술한 문서입니다.
-- [WBS 문서]([path_to_wbs_document](https://github.com/Guinsu/GDJ80-TeamB-topaz/blob/main/topaz/src/main/resources/static/document/WBS.jpg)): 프로젝트의 전체 작업을 세부 작업으로 나누어 정리한 문서로, 각 작업의 범위와 완료 기준을 정의합니다.
-- [ERD 다이어그램]([path_to_erd_image_or_document](https://github.com/Guinsu/GDJ80-TeamB-topaz/blob/main/topaz/src/main/resources/static/document/04.%20ERD(GDJ80_Team%20B).png)): 데이터베이스의 구조를 시각적으로 표현한 다이어그램으로, 각 엔티티와 그들 간의 관계를 나타냅니다.
-- [테이블 정의서]([path_to_table_definition_document](https://docs.google.com/spreadsheets/d/1wTRTSSpyEERgcNskOXebz4BFeypHOJ5HmzukkMMTu-I/edit?gid=619662548#gid=619662548)): 각 테이블의 컬럼, 데이터 타입, 제약 조건 등을 상세히 설명한 문서입니다.
+- [요구사항 명세서](https://github.com/Guinsu/GDJ80-TeamB-topaz/blob/main/topaz/src/main/resources/static/document/%EC%9A%94%EA%B5%AC%EC%82%AC%ED%95%AD%EB%AA%85%EC%84%B8%EC%84%9C.jpg): 사용자가 시스템에서 필요로 하는 모든 기능과 제약 조건을 상세히 기술한 문서입니다.
+- [WBS 문서](https://github.com/Guinsu/GDJ80-TeamB-topaz/blob/main/topaz/src/main/resources/static/document/WBS.jpg): 프로젝트의 전체 작업을 세부 작업으로 나누어 정리한 문서로, 각 작업의 범위와 완료 기준을 정의합니다.
+- [ERD 다이어그램](https://github.com/Guinsu/GDJ80-TeamB-topaz/blob/main/topaz/src/main/resources/static/document/04.%20ERD(GDJ80_Team%20B).png): 데이터베이스의 구조를 시각적으로 표현한 다이어그램으로, 각 엔티티와 그들 간의 관계를 나타냅니다.
+- [테이블 정의서](https://docs.google.com/spreadsheets/d/1wTRTSSpyEERgcNskOXebz4BFeypHOJ5HmzukkMMTu-I/edit?gid=619662548#gid=619662548): 각 테이블의 컬럼, 데이터 타입, 제약 조건 등을 상세히 설명한 문서입니다.
 
 ## 4. 주요 기능
 ### 사용자 기능
