@@ -101,7 +101,6 @@
   ## 6. 미리보기
 
   ### 1. 공지사항
-  <p align="center>
-  <img src="![공지사항](https://github.com/user-attachments/assets/e47ceaf8-424d-4b62-9da1-84fe0b0bf679)">
-  </p>
+ ![공지사항](https://github.com/user-attachments/assets/e47ceaf8-424d-4b62-9da1-84fe0b0bf679)
+
  
