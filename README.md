@@ -100,8 +100,8 @@
   - 
   ## 6. 미리보기
 
-  ### 1. 직원관리
+  ### 1. 공지사항
   <p align="center>
-  <img src="https://github.com/user-attachments/assets/b27108d1-9ad8-429f-97b7-2979398bd786" style="width:200px"></img>
+  <img src="https://github.com/user-attachments/assets/e47ceaf8-424d-4b62-9da1-84fe0b0bf679" alt="공지사항">
   </p>
  
