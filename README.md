@@ -100,7 +100,19 @@
   - 
   ## 6. 미리보기
 
-  ### 1. 공지사항
- ![공지사항](https://github.com/user-attachments/assets/e47ceaf8-424d-4b62-9da1-84fe0b0bf679)
+ ### 1. 직원관리
+![직원관리](https://github.com/user-attachments/assets/c7307c72-41bf-405c-975c-7398d794956d)
+
+  ### 2. 내정보
+![내정보](https://github.com/user-attachments/assets/dd3a7fd7-1cd1-4f97-a85a-daf10ad75e69)
+
+  ### 3. 쪽지
+![쪽지](https://github.com/user-attachments/assets/e55bd68e-f24b-492b-a144-5fc394180c90)
+
+  ### 4. 공지사항
+![공지사항](https://github.com/user-attachments/assets/e47ceaf8-424d-4b62-9da1-84fe0b0bf679)
+
+  ### 5. 출퇴근
+![출퇴근](https://github.com/user-attachments/assets/921fe3b7-715b-4b3a-912d-d6903c438046)
 
  
