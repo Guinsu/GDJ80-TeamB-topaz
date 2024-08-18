@@ -102,6 +102,6 @@
 
   ### 1. 직원관리
   <p align="center>
-  <img src="https://github.com/user-attachments/assets/b27108d1-9ad8-429f-97b7-2979398bd786">
+  <img src="https://github.com/user-attachments/assets/b27108d1-9ad8-429f-97b7-2979398bd786" style="width:200px"></img>
   </p>
  
