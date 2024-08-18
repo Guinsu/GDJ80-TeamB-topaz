@@ -101,6 +101,7 @@
   ## 6. 미리보기
 
   ### 1. 직원관리
-  <iframe src="https://drive.google.com/file/d/1P7KLVVe0Dg9LdzJYMP2SDlJ8rU3sIxvm/preview" width="560" height="315" allow="autoplay"></iframe>
-  
+  <p align="center>
+  <img src="https://github.com/user-attachments/assets/b27108d1-9ad8-429f-97b7-2979398bd786">
+  </p>
  
