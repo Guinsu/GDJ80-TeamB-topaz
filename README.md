@@ -102,6 +102,6 @@
 
   ### 1. 공지사항
   <p align="center>
-  <img src="https://github.com/user-attachments/assets/e47ceaf8-424d-4b62-9da1-84fe0b0bf679" alt="공지사항">
+  [공지사항](https://github.com/user-attachments/assets/e47ceaf8-424d-4b62-9da1-84fe0b0bf679)
   </p>
  
